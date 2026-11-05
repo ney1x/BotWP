@@ -5,11 +5,11 @@
   "description": "Bot de WhatsApp para Franky's Efectivo (Miami): precio del oro, divisas, tienda, empeño y paso a asesor.",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.9"
   },
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "simular": "tsx src/simulador.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+    "simular": "tsx --env-file-if-exists=.env src/simulador.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
