@@ -60,14 +60,14 @@ const wa: ProveedorWhatsApp = {
   },
 };
 
-function crearMotor(ia?: ProveedorIA, extra: Record<string, string> = {}) {
+function crearMotor(ia?: ProveedorIA, extra: Record<string, string> = {}, tienda = new FuenteTienda('http://wc', fetchFalso)) {
   return new Motor({
     config: configPorDefecto({ ASESOR_WHATSAPP: ASESOR, LIMITE_RESPUESTAS_DIA: '5', ...extra }),
     wa,
     almacen,
     ia,
     oro: new FuenteOro('http://gold', fetchFalso),
-    tienda: new FuenteTienda('http://wc', fetchFalso),
+    tienda,
     divisas: new FuenteDivisas(undefined, { zona, feriados: [] }),
     conocimiento: 'kb',
     reloj: () => ahora,
@@ -88,13 +88,21 @@ beforeEach(() => {
 });
 
 describe('motor', () => {
-  test('"hola" → bienvenida + menú', async () => {
+  test('"hola" → bienvenida y menú en UN solo mensaje', async () => {
     const motor = crearMotor();
     await texto(motor, 'Hola');
     const m = alCliente();
-    expect(m[0]).toMatchObject({ clase: 'texto' });
+    expect(m).toHaveLength(1);
+    expect(m[0]).toMatchObject({ clase: 'lista' });
     expect(textos()[0]).toContain('Ana');
-    expect(m[1]).toMatchObject({ clase: 'lista' });
+  });
+
+  test('chat nuevo con pregunta libre: la bienvenida va dentro de la respuesta', async () => {
+    const motor = crearMotor();
+    await texto(motor, 'necesito información');
+    const m = alCliente();
+    expect(m).toHaveLength(1);
+    expect(textos()[0]).toMatch(/^¡Hola Ana!/);
   });
 
   test('precio del oro desde el menú y estimado sin IA', async () => {
@@ -215,7 +223,30 @@ describe('motor', () => {
     expect(ia.peticiones[0]?.contexto).toContain('abierta');
     expect(ia.peticiones[0]?.mensaje).toBe('tienen cadenas de oro?');
     const m = alCliente();
-    expect(m.map((x) => x.clase)).toEqual(['texto', 'texto', 'imagen', 'lista']); // bienvenida, IA, pieza, lista
+    expect(m.map((x) => x.clase)).toEqual(['texto', 'imagen', 'lista']); // bienvenida + IA, pieza, lista
+    expect(textos()[0]).toContain('Le muestro nuestras cadenas.');
+  });
+
+  test('la tienda muestra 3 piezas por vista', async () => {
+    const tienda = new FuenteTienda('http://wc', (async () =>
+      new Response(
+        JSON.stringify(
+          Array.from({ length: 7 }, (_, i) => ({
+            id: i + 1,
+            name: `Anillo ${i + 1}`,
+            permalink: `https://x.com/producto/a${i}/`,
+            is_in_stock: true,
+            prices: { price: '10000', currency_minor_unit: 2 },
+            images: [{ src: `https://img/${i}.jpg` }],
+            categories: [{ slug: 'anillos', name: 'Anillos' }],
+          })),
+        ),
+      )) as unknown as typeof fetch);
+    const m2 = crearMotor(undefined, { LIMITE_RESPUESTAS_DIA: '40' }, tienda);
+    await opcion(m2, 'CAT:anillos');
+    expect(alCliente().filter((x) => x.clase === 'imagen')).toHaveLength(3);
+    await opcion(m2, ID.TIENDA_MAS);
+    expect(alCliente().filter((x) => x.clase === 'imagen')).toHaveLength(6);
   });
 
   test('3 mensajes fuera de tema seguidos → solo menú 24 h sin gastar IA', async () => {

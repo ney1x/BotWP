@@ -3,7 +3,7 @@ import { conversacionNueva } from '../almacen/tipos.js';
 import type { Config } from '../config.js';
 import type { FuenteDivisas } from '../datos/divisas.js';
 import { estimarOro, interpretarPeso, tablaOro, type FuenteOro } from '../datos/oro.js';
-import { formatoUsd, type FiltroTienda, type FuenteTienda } from '../datos/tienda.js';
+import { formatoUsd, PIEZAS_POR_VISTA, type FiltroTienda, type FuenteTienda } from '../datos/tienda.js';
 import { ahoraLegible, describirApertura, diaLocal, estaAbierto, type OpcionesHorario } from '../horario.js';
 import { errorATexto, log } from '../log.js';
 import type { Contenido, Entrante, ProveedorWhatsApp, Saliente } from '../whatsapp/tipos.js';
@@ -49,6 +49,14 @@ const limpiarNombre = (n?: string) =>
     ?.replace(/[^\p{L}\p{M} .'-]/gu, '')
     .trim()
     .slice(0, 40) || undefined;
+
+/** Antepone `prefijo` al texto del primer mensaje que tenga texto, sin agregar mensajes. */
+export function anteponer(salida: Saliente[], prefijo?: string): Saliente[] {
+  if (!prefijo) return salida;
+  const [primero, ...resto] = salida;
+  if (primero && primero.clase !== 'imagen') return [{ ...primero, texto: `${prefijo}\n\n${primero.texto}` }, ...resto];
+  return [{ clase: 'texto', texto: prefijo }, ...salida];
+}
 
 /** Orquesta un mensaje entrante → respuestas. Un mensaje a la vez por teléfono. */
 export class Motor {
@@ -171,7 +179,7 @@ export class Motor {
     const texto = c.texto.slice(0, TEXTO_MAX);
     const t = norm(texto);
     if (RE_MENU.test(t)) return [menuPrincipal()];
-    if (RE_SALUDO.test(t) && t.length <= 30) return [{ clase: 'texto', texto: T.bienvenida(conv.nombre) }, menuPrincipal()];
+    if (RE_SALUDO.test(t) && t.length <= 30) return [menuPrincipal(T.bienvenidaConMenu(conv.nombre))];
     if (t.length <= 80 && RE_ASESOR.test(t)) return this.pasarAAsesor(conv, 'El cliente pidió hablar con un asesor');
 
     const peso = interpretarPeso(texto);
@@ -179,13 +187,14 @@ export class Motor {
 
     if (conv.soloMenuHasta && new Date(conv.soloMenuHasta) > ahora) return [menuPrincipal(T.soloMenu)];
 
-    const saludo = esNueva ? [{ clase: 'texto', texto: T.bienvenida(conv.nombre) } satisfies Saliente] : [];
-    if (!this.d.ia) return [...saludo, menuPrincipal(T.noEntendi)];
+    // En un chat nuevo la bienvenida va dentro del primer mensaje, no aparte (Meta cobra cada mensaje).
+    const saludo = esNueva ? T.bienvenida(conv.nombre) : undefined;
+    if (!this.d.ia) return anteponer([menuPrincipal(T.noEntendi)], saludo);
 
     const usosIA = await this.d.almacen.incrementar(conv.telefono, 'ia', diaLocal(ahora, this.horario.zona));
-    if (usosIA > this.d.config.LIMITE_IA_DIA) return [menuPrincipal(T.soloMenu)];
+    if (usosIA > this.d.config.LIMITE_IA_DIA) return anteponer([menuPrincipal(T.soloMenu)], saludo);
 
-    return [...saludo, ...(await this.conIA(conv, texto))];
+    return anteponer(await this.conIA(conv, texto), saludo);
   }
 
   private async conIA(conv: Conversacion, texto: string): Promise<Saliente[]> {
@@ -340,7 +349,7 @@ export class Motor {
 
   private async mostrarJoyas(conv: Conversacion, filtro: FiltroTienda): Promise<Saliente[]> {
     const desde = filtro.desde ?? 0;
-    const { piezas, total } = await this.d.tienda.buscar({ ...filtro, desde, limite: 5 });
+    const { piezas, total } = await this.d.tienda.buscar({ ...filtro, desde, limite: PIEZAS_POR_VISTA });
     if (piezas.length === 0) {
       conv.tienda = undefined;
       return [botonesMenu(`${T.tiendaVacia}\n${this.d.config.TIENDA_URL}`)];

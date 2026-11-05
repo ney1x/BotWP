@@ -117,7 +117,7 @@ describe('tienda', () => {
     const baratas = await t.buscar({ precioMaximo: 500 });
     expect(baratas.total).toBe(1);
     const anillos = await t.buscar({ categoria: 'anillos', desde: 95 });
-    expect(anillos.piezas).toHaveLength(5);
+    expect(anillos.piezas).toHaveLength(3);
     expect(anillos.total).toBe(100);
   });
 });

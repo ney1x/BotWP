@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { LecturaDivisas } from '../datos/divisas.js';
 import { estimarOro, tablaOro, type LecturaOro } from '../datos/oro.js';
-import { formatoUsd, type FiltroTienda, type FuenteTienda } from '../datos/tienda.js';
+import { formatoUsd, PIEZAS_POR_VISTA, type FiltroTienda, type FuenteTienda } from '../datos/tienda.js';
 import type { DefHerramienta } from './ia.js';
 import { FORMULARIOS } from './formularios.js';
 
@@ -119,7 +119,13 @@ export function crearEjecutor(fuentes: FuentesHerramientas, acciones: Accion[]) 
       }
       case 'buscar_joyas': {
         const b = BuscarIn.parse(entrada ?? {});
-        const filtro: FiltroTienda = { categoria: b.categoria, texto: b.texto, precioMaximo: b.precio_maximo, desde: 0 };
+        const filtro: FiltroTienda = {
+          categoria: b.categoria,
+          texto: b.texto,
+          precioMaximo: b.precio_maximo,
+          desde: 0,
+          limite: PIEZAS_POR_VISTA,
+        };
         const { piezas, total } = await fuentes.tienda.buscar(filtro);
         acciones.push({ tipo: 'mostrar_joyas', filtro });
         if (total === 0) return 'Sin resultados: se le mostrará al cliente el link de la tienda.';

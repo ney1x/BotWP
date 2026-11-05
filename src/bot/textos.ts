@@ -78,9 +78,14 @@ export function menuPrincipal(texto = '¿En qué le puedo ayudar? Elija una opci
   };
 }
 
+const bienvenida = (nombre?: string): string =>
+  `¡Hola${nombre ? ` ${nombre}` : ''}! 👋 Soy el asistente virtual de *Franky's Efectivo*. Le ayudo con el precio del oro, empeño, préstamos, divisas y nuestras joyas disponibles.`;
+
 export const T = {
-  bienvenida: (nombre?: string) =>
-    `¡Hola${nombre ? ` ${nombre}` : ''}! 👋 Soy el asistente virtual de *Franky's Efectivo*. Le ayudo con el precio del oro, empeño, préstamos, divisas y nuestras joyas disponibles.`,
+  bienvenida,
+
+  bienvenidaConMenu: (nombre?: string) =>
+    `${bienvenida(nombre)}\n\n¿En qué le puedo ayudar? Elija una opción o escríbame su pregunta.`,
 
   oroNoDisponible:
     'En este momento no puedo confirmar el precio del oro. Un asesor se lo da enseguida.',
