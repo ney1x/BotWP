@@ -49,7 +49,9 @@ const Esquema = z.object({
 export type Config = z.infer<typeof Esquema>;
 
 export function cargarConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const r = Esquema.safeParse(env);
+  // Una variable vacía (DIVISAS_CSV_URL=) cuenta como no configurada.
+  const limpio = Object.fromEntries(Object.entries(env).filter(([, v]) => v !== undefined && v.trim() !== ''));
+  const r = Esquema.safeParse(limpio);
   if (!r.success) {
     const detalle = r.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Configuración inválida: ${detalle}`);
