@@ -1,32 +1,73 @@
 # BotWP
 
-Bot de WhatsApp. Proyecto personal documentado paso a paso: cada funcionalidad se desarrolla en su propia rama y entra a `main` mediante Pull Request.
+Bot de WhatsApp para Franky's Efectivo (Miami). Proyecto personal documentado paso a paso: cada funcionalidad se desarrolla en su propia rama y entra a `main` mediante Pull Request.
 
 ## Estado
 
-🚧 En desarrollo. Ver [CHANGELOG](CHANGELOG.md) para el historial de cambios.
+🚧 MVP para demo. Ver [CHANGELOG](CHANGELOG.md) para el historial de cambios.
+
+## Qué hace
+
+- Precio de compra del oro por quilate, leído en vivo de la calculadora del sitio, y estimados ("5 g de 18k").
+- Tasas de cambio desde una planilla que edita el negocio; si no están confirmadas, "Consultar" y asesor.
+- Joyas disponibles de la tienda WooCommerce, con foto, precio y link.
+- Información de empeño, préstamos (joyas, domicilio, vehículo) y envío por correo.
+- Formularios que arman una ficha para el asesor: cotizar reloj o joya, visita a domicilio, vehículo, cita en Doral.
+- Texto libre con IA (Claude Haiku 5.5) que solo usa datos de las herramientas: nunca inventa precios ni da intereses o plazos.
+- Paso a asesor con horario (lunes a sábado 9:00–18:30), pausa del bot cuando el asesor escribe desde la app (Coexistence) y límites anti-spam.
 
 ## Stack
 
-_Por definir_ (se actualiza al elegir librería y runtime).
+- Node.js 22+ y TypeScript
+- [Hono](https://hono.dev) para el webhook
+- WhatsApp Cloud API (adaptador intercambiable; YCloud para producción, pendiente)
+- Anthropic SDK (`claude-haiku-5-5`)
+- PostgreSQL (opcional: sin `DATABASE_URL` usa memoria)
+- Vitest
 
 ## Requisitos
 
 - Git
-- _Runtime por definir_
+- Node.js 22 o superior
 
 ## Instalación
 
 ```bash
 git clone https://github.com/ney1x/BotWP.git
 cd BotWP
+npm install
 ```
 
-_Pasos de instalación y ejecución se agregan cuando exista código._
+## Uso
+
+| Comando | Qué hace |
+|---|---|
+| `npm run simular` | Chat de prueba por consola, sin WhatsApp |
+| `npm run dev` | Servidor del webhook con recarga |
+| `npm test` | Tests |
+| `npm run typecheck` | Verificación de tipos |
+| `npm run build` y `npm start` | Compilar y arrancar en producción |
+
+Guía de la demo con el número de prueba de Meta y despliegue en Railway: [docs/DEMO.md](docs/DEMO.md).
 
 ## Configuración
 
-Las variables sensibles van en `.env` (nunca se sube). Plantilla en `.env.example` cuando exista.
+Las variables sensibles van en `.env` (nunca se sube). Plantilla en [.env.example](.env.example).
+
+La información del negocio que usa la IA está en `kb/*.md`. Lo marcado `[PENDIENTE]` espera confirmación del cliente.
+
+## Estructura
+
+```
+src/
+  bot/        motor, menús, formularios, IA y herramientas
+  datos/      oro, tienda y divisas
+  whatsapp/   adaptador Cloud API y tipos internos
+  almacen/    memoria y Postgres
+  precios/    validador de la tarifa de oro
+kb/           base de conocimiento
+test/
+```
 
 ## Flujo de trabajo
 
