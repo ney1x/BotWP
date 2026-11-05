@@ -10,6 +10,20 @@
 
 Si el cliente deja el servicio, desconecta el número desde su app (Configuración → Cuenta → Plataforma para empresas → Desconectar) y conserva su número y su historial.
 
+## YCloud (respuesta del soporte, 2026-11-05)
+
+- Ecos del asesor: evento `whatsapp.smb.message.echoes`, payload `whatsappMessage` (`from`, `to`, `type`, contenido…). Validar el header `YCloud-Signature` antes de procesar. Referencia: https://newdocs.ycloud.com/en/api-reference/webhook-reference/whatsapp-smb-message-echoes
+- Límite fijo de 5 mensajes por segundo en números Coexistence.
+- Requisitos del número: app WhatsApp Business (no personal), versión 2.24.17 o superior, acceso al celular para el QR.
+- Sin responder todavía: si el plan Free permite Coexistence, recargo sobre Meta y si piden método de pago antes de producción.
+
+## El día del alta con el cliente
+
+- [ ] Desactivar en la app el **mensaje de bienvenida** y el **mensaje de ausencia** (si no, el cliente recibe esa respuesta y la del bot).
+- [ ] Avisarles: las listas de difusión quedan de solo lectura, no se pueden editar ni borrar mensajes, se apagan los mensajes temporales.
+- [ ] No importar el historial de chats; solo contactos.
+- [ ] Abrir la app del celular al menos cada 14 días (si no, Meta desconecta el número).
+
 ## Migrar a Tech Provider propio (después de producción)
 
 Objetivo: conectarnos directo a la WhatsApp Cloud API de Meta, sin YCloud, y reutilizarlo para todos los clientes.
@@ -35,4 +49,4 @@ Gana: sin intermediario ni límites de planes. Costo: semanas de verificación y
 - [ ] Planilla de divisas (`DIVISAS_CSV_URL`).
 - [ ] Feriados (`FERIADOS`).
 - [ ] Precio de instalación y mensualidad.
-- [ ] Confirmar con YCloud que el plan Free permite Coexistence.
+- [ ] Confirmar con YCloud que el plan Free permite Coexistence (ticket abierto, pregunta repetida).
