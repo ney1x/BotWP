@@ -1,5 +1,8 @@
 import { log, errorATexto } from '../log.js';
 
+/** Piezas por vista: cada una es un mensaje cobrado por Meta. */
+export const PIEZAS_POR_VISTA = 3;
+
 export interface Producto {
   id: number;
   nombre: string;
@@ -133,7 +136,7 @@ export class FuenteTienda {
       return true;
     });
     const desde = f.desde ?? 0;
-    return { piezas: filtrados.slice(desde, desde + (f.limite ?? 5)), total: filtrados.length };
+    return { piezas: filtrados.slice(desde, desde + (f.limite ?? PIEZAS_POR_VISTA)), total: filtrados.length };
   }
 
   async porId(id: number): Promise<Producto | undefined> {

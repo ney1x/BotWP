@@ -17,6 +17,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - Texto libre con IA (`claude-haiku-5-5`) que solo usa datos de las herramientas; límites diarios, modo solo menú tras 3 mensajes fuera de tema y alerta de gasto.
 - Almacenamiento en memoria o PostgreSQL con retención de 90 días.
 - Simulador de chat por consola (`npm run simular`) y guía de demo (`docs/DEMO.md`).
+- Pendientes y decisiones de cuentas, con el plan para migrar a Tech Provider propio (`docs/PENDIENTES.md`).
 
 ### Changed
 - Validador de tarifa migrado a TypeScript (`src/precios/validarTarifa.ts`), tests en Vitest.
+- Menos mensajes cobrados por Meta: la bienvenida va dentro del primer mensaje (menú o respuesta) y la tienda muestra 3 piezas por vista en vez de 5.
+
+### Fixed
+- `npm run dev` y `npm run simular` cargan `.env`.
+- Variables vacías en `.env` cuentan como no configuradas.

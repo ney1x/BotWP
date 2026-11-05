@@ -37,10 +37,10 @@ Escriba `hola`. Para tocar un botón o una fila escriba su número. Comandos: `/
 
 | Probar | Qué debe pasar |
 |---|---|
-| "hola" | Bienvenida + menú |
+| "hola" | Bienvenida y menú en un solo mensaje |
 | Menú → Precio del oro | Tabla por quilate leída en vivo de la calculadora del sitio |
 | "tengo 5 g de 18k" | Estimado referencial |
-| Menú → Joyas disponibles → una categoría | 5 piezas con foto, precio y link + "Me interesa" |
+| Menú → Joyas disponibles → una categoría | 3 piezas con foto, precio y link + "Me interesa" |
 | Menú → Cotizar reloj o joya | Preguntas + fotos → ficha al asesor |
 | Menú → Préstamo con vehículo → "No" a la deuda | Pasa a asesor con la nota |
 | Una nota de voz | Aviso de que no escucha audios + botones |
