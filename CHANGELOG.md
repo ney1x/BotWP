@@ -7,6 +7,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ### Added
 - Adaptador de YCloud para producción con Coexistence (`WA_PROVEEDOR=ycloud`): envío por `sendDirectly`, webhooks `whatsapp.inbound_message.received` y `whatsapp.smb.message.echoes`, y verificación de la firma `YCloud-Signature`.
 - Guía de producción con YCloud y Railway (`docs/PRODUCCION.md`).
+- Reporte mensual (`npm run reporte -- YYYY-MM`): mensajes cobrables, promedio diario, proyección contra los gratis de YCloud (`YCLOUD_GRATIS_MES`, `YCLOUD_USD_MENSAJE`), fichas por tipo, horas pico, botones más tocados y gasto de IA.
+- Los avisos de ficha a `ASESOR_WHATSAPP` quedan registrados como mensajes (`aviso`) para contarlos en el reporte.
+
+### Changed
+- Con YCloud, `ASESOR_WHATSAPP` se deja vacío: el asesor ve los chats en su app y se ahorra un mensaje cobrable por cada pedido de asesor.
 
 ## [0.1.0] - 2026-11-05
 

@@ -41,7 +41,7 @@ Gana: sin intermediario ni límites de planes. Costo: semanas de verificación y
 ## Código
 
 - [x] Adaptador YCloud para producción (`src/whatsapp/ycloud.ts`, guía en `docs/PRODUCCION.md`).
-- [ ] Reporte mensual para el cliente (consultas por tema, fichas, horas pico, gasto de Meta e IA).
+- [x] Reporte mensual (`npm run reporte`): mensajes cobrables, proyección contra los gratis de YCloud, fichas, horas pico, botones y gasto de IA. Falta: versión para enviar al cliente.
 - [ ] Evaluación con ~50 preguntas reales: Haiku 5.5 vs. gpt-5-nano.
 - [ ] Menús y textos fijos en inglés.
 

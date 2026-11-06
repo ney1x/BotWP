@@ -48,6 +48,10 @@ const Esquema = z.object({
   PAUSA_ASESOR_HORAS: z.coerce.number().default(4),
   GASTO_ALERTA_USD_DIA: z.coerce.number().default(2),
   RETENCION_DIAS: z.coerce.number().int().default(90),
+
+  // Reporte mensual (cuenta de YCloud)
+  YCLOUD_GRATIS_MES: z.coerce.number().int().default(1000), // mensajes gratis por mes
+  YCLOUD_USD_MENSAJE: z.coerce.number().default(0.0034), // costo de cada mensaje después de los gratis
 });
 
 export type Config = z.infer<typeof Esquema>;

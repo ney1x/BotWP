@@ -1,14 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import type { Almacen, ClaveContador, Conversacion, Ficha } from './tipos.js';
+import type { Almacen, ClaveContador, Conversacion, DatosReporte, Direccion, Ficha, MensajeGuardado } from './tipos.js';
 
 /** Almacén en memoria: para el simulador, los tests y una demo sin base de datos. */
 export class AlmacenMemoria implements Almacen {
   readonly conversaciones = new Map<string, Conversacion>();
-  readonly mensajes: { telefono: string; direccion: string; texto: string; creado: Date }[] = [];
+  readonly mensajes: MensajeGuardado[] = [];
   readonly fichas: (Ficha & { id: string })[] = [];
   private readonly contadores = new Map<string, number>();
   private readonly procesados = new Map<string, number>();
-  private readonly gastos = new Map<string, number>();
+  readonly gastos = new Map<string, number>();
 
   async iniciar() {}
 
@@ -21,7 +21,7 @@ export class AlmacenMemoria implements Almacen {
     this.conversaciones.set(c.telefono, structuredClone(c));
   }
 
-  async registrarMensaje(telefono: string, direccion: 'entrante' | 'saliente' | 'asesor', texto: string) {
+  async registrarMensaje(telefono: string, direccion: Direccion, texto: string) {
     this.mensajes.push({ telefono, direccion, texto, creado: new Date() });
   }
 
@@ -52,6 +52,17 @@ export class AlmacenMemoria implements Almacen {
     const v = (this.gastos.get(dia) ?? 0) + usd;
     this.gastos.set(dia, v);
     return v;
+  }
+
+  async datosReporte(desde: Date, hasta: Date, diaDesde: string, diaHasta: string): Promise<DatosReporte> {
+    const dentro = (d: Date) => d >= desde && d < hasta;
+    return {
+      mensajes: this.mensajes.filter((m) => dentro(m.creado)).map((m) => ({ ...m })),
+      fichas: this.fichas
+        .map((f) => ({ tipo: f.tipo, fueraDeHorario: f.fueraDeHorario, creada: new Date(f.creada) }))
+        .filter((f) => dentro(f.creada)),
+      gastosIA: [...this.gastos].filter(([dia]) => dia >= diaDesde && dia < diaHasta).map(([dia, usd]) => ({ dia, usd })),
+    };
   }
 
   async purgar(antesDe: Date) {

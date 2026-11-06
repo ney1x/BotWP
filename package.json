@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
     "simular": "tsx --env-file-if-exists=.env src/simulador.ts",
+    "reporte": "tsx --env-file-if-exists=.env src/reporte.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",

@@ -44,6 +44,7 @@ npm install
 |---|---|
 | `npm run simular` | Chat de prueba por consola, sin WhatsApp |
 | `npm run dev` | Servidor del webhook con recarga |
+| `npm run reporte -- 2026-11` | Reporte del mes: mensajes cobrables, proyección contra los gratis de YCloud, fichas y gasto de IA (necesita `DATABASE_URL`) |
 | `npm test` | Tests |
 | `npm run typecheck` | Verificación de tipos |
 | `npm run build` y `npm start` | Compilar y arrancar en producción |
