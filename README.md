@@ -20,7 +20,7 @@ Bot de WhatsApp para Franky's Efectivo (Miami). Proyecto personal documentado pa
 
 - Node.js 22+ y TypeScript
 - [Hono](https://hono.dev) para el webhook
-- WhatsApp Cloud API (adaptador intercambiable; YCloud para producción, pendiente)
+- WhatsApp: Cloud API de Meta (demo) o YCloud con Coexistence (producción), según `WA_PROVEEDOR`
 - Anthropic SDK (`claude-haiku-5-5`)
 - PostgreSQL (opcional: sin `DATABASE_URL` usa memoria)
 - Vitest
@@ -44,11 +44,12 @@ npm install
 |---|---|
 | `npm run simular` | Chat de prueba por consola, sin WhatsApp |
 | `npm run dev` | Servidor del webhook con recarga |
+| `npm run reporte -- 2026-11` | Reporte del mes: mensajes cobrables, proyección contra los gratis de YCloud, fichas y gasto de IA (necesita `DATABASE_URL`) |
 | `npm test` | Tests |
 | `npm run typecheck` | Verificación de tipos |
 | `npm run build` y `npm start` | Compilar y arrancar en producción |
 
-Guía de la demo con el número de prueba de Meta y despliegue en Railway: [docs/DEMO.md](docs/DEMO.md).
+Guía de la demo con el número de prueba de Meta: [docs/DEMO.md](docs/DEMO.md). Producción con YCloud y Railway: [docs/PRODUCCION.md](docs/PRODUCCION.md).
 
 ## Configuración
 

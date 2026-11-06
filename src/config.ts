@@ -14,7 +14,11 @@ const Esquema = z.object({
   PORT: z.coerce.number().int().default(3000),
 
   // WhatsApp
-  WA_PROVEEDOR: z.enum(['cloud']).default('cloud'),
+  // cloud = Meta directo (demo con número de prueba) · ycloud = producción con Coexistence
+  WA_PROVEEDOR: z.enum(['cloud', 'ycloud']).default('cloud'),
+  YCLOUD_API_KEY: z.string().optional(),
+  YCLOUD_WEBHOOK_SECRET: z.string().optional(), // secreto del endpoint de webhook en YCloud
+  YCLOUD_NUMERO: z.string().optional(), // número del negocio, ej. +17868782085
   WA_TOKEN: z.string().optional(),
   WA_PHONE_NUMBER_ID: z.string().optional(),
   WA_APP_SECRET: z.string().optional(),
@@ -44,6 +48,10 @@ const Esquema = z.object({
   PAUSA_ASESOR_HORAS: z.coerce.number().default(4),
   GASTO_ALERTA_USD_DIA: z.coerce.number().default(2),
   RETENCION_DIAS: z.coerce.number().int().default(90),
+
+  // Reporte mensual (cuenta de YCloud)
+  YCLOUD_GRATIS_MES: z.coerce.number().int().default(1000), // mensajes gratis por mes
+  YCLOUD_USD_MENSAJE: z.coerce.number().default(0.0034), // costo de cada mensaje después de los gratis
 });
 
 export type Config = z.infer<typeof Esquema>;

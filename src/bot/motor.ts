@@ -426,6 +426,7 @@ export class Motor {
     if (!destino) return;
     try {
       await this.d.wa.enviar(destino, { clase: 'texto', texto: lineas.join('\n') });
+      await this.d.almacen.registrarMensaje(destino, 'aviso', `[ficha ${f.tipo}]`);
     } catch (e) {
       log.error('asesor: no se pudo avisar', { error: errorATexto(e) });
     }

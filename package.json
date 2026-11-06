@@ -1,6 +1,6 @@
 {
   "name": "botwp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Bot de WhatsApp para Franky's Efectivo (Miami): precio del oro, divisas, tienda, empeño y paso a asesor.",
   "type": "module",
@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
     "simular": "tsx --env-file-if-exists=.env src/simulador.ts",
+    "reporte": "tsx --env-file-if-exists=.env src/reporte.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
