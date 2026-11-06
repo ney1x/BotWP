@@ -17,7 +17,14 @@ if (!config.DATABASE_URL) {
 
 const ahora = new Date();
 const mes = process.argv[2] ?? DateTime.fromJSDate(ahora, { zone: config.ZONA_HORARIA }).toFormat('yyyy-MM');
-const { inicio, fin } = rangoMes(mes, config.ZONA_HORARIA);
+let rango;
+try {
+  rango = rangoMes(mes, config.ZONA_HORARIA);
+} catch (e) {
+  console.error(e instanceof Error ? e.message : String(e));
+  process.exit(1);
+}
+const { inicio, fin } = rango;
 
 const almacen = new AlmacenPostgres(config.DATABASE_URL);
 try {
