@@ -14,7 +14,7 @@ Escriba `hola`. Para tocar un botón o una fila escriba su número. Comandos: `/
 ## 2. App de Meta y número de prueba
 
 1. En [developers.facebook.com](https://developers.facebook.com/apps) cree una app tipo **Business** y agregue el producto **WhatsApp**.
-2. En *WhatsApp → API Setup* copie el **Phone number ID** y genere un token. El token temporal dura 24 h; para la demo alcanza. Para algo estable, cree un *System User* con token permanente.
+2. En *Conectar en WhatsApp → Paso 1. Pruébalo* copie el **Phone number ID** (aparece en el comando cURL). Para `WA_TOKEN` use un **token permanente de usuario del sistema**: *business.facebook.com → Configuración → Usuarios del sistema → Agregar* (rol Administrador) → *Asignar activos* (la app con control total) → *Generar token* (caducidad "Nunca", permisos `whatsapp_business_messaging` y `whatsapp_business_management`). El token temporal de la página vence en 24 h y solo sirve para su botón de prueba.
 3. En *To*, agregue los números que van a probar (el suyo, el del asesor de la demo). Cada uno confirma con un código.
 4. En *App settings → Basic* copie el **App Secret**.
 
@@ -30,8 +30,14 @@ Escriba `hola`. Para tocar un botón o una fila escriba su número. Comandos: `/
 
 1. En Meta: *WhatsApp → Configuration → Webhook → Edit*.
 2. Callback URL: `https://<dominio>/webhook`. Verify token: el mismo valor de `WA_VERIFY_TOKEN`.
-3. En *Webhook fields* suscriba **messages**.
-4. Desde uno de los números registrados escriba "hola" al número de prueba.
+3. En *Campos del webhook* suscriba **messages**.
+4. **Publique la app** (*Publicar*). Sin publicar, Meta solo entrega los webhooks de prueba del panel, no los mensajes reales. El único requisito es una URL de política de privacidad en *Configuración de la app → Básica*.
+5. **Suscriba la app a la cuenta de WhatsApp.** La cuenta de prueba viene conectada solo a la app interna de Meta que muestra los webhooks del panel; sin este paso los mensajes nunca llegan al bot. El ID de la cuenta aparece como `asset_id` en la URL del Administrador de WhatsApp:
+   ```bash
+   curl -X POST "https://graph.facebook.com/v25.0/<WABA_ID>/subscribed_apps" -H "Authorization: Bearer <WA_TOKEN>"
+   ```
+   Debe responder `{"success":true}`. Para verificar, el mismo URL con `GET` lista la app.
+6. El número de prueba no se puede buscar en WhatsApp: el primer mensaje lo manda Meta. En *Paso 1. Pruébalo → Enviar mensaje* elija su número como destinatario y envíe la plantilla. Luego responda "hola" en ese chat; desde ahí hay 24 h para probar.
 
 ## Qué mostrar en la demo
 
