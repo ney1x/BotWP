@@ -19,7 +19,7 @@ const Esquema = z.object({
   WA_PHONE_NUMBER_ID: z.string().optional(),
   WA_APP_SECRET: z.string().optional(),
   WA_VERIFY_TOKEN: z.string().optional(),
-  WA_GRAPH_VERSION: z.string().default('v23.0'),
+  WA_GRAPH_VERSION: z.string().default('v25.0'),
 
   // IA
   ANTHROPIC_API_KEY: z.string().optional(),
