@@ -4,7 +4,7 @@
 
 | Cuenta | A nombre de | Nota |
 |---|---|---|
-| Meta Business (portafolio donde vive el número de WhatsApp) | Nosotros | El número del cliente (+1 786-878-2085) se conecta a nuestro portafolio. El cliente escanea el QR desde su app WhatsApp Business. |
+| Meta Business (portfolio donde vive el número de WhatsApp) | El cliente | Producción: en el portfolio de Franky's (el suyo, o uno nuevo con sus datos). Nuestro portfolio "NS" es solo para la demo y para Tech Provider. El cliente escanea el QR desde su app WhatsApp Business. |
 | YCloud | Nosotros | Plan Free (1 usuario, 2 números). Los mensajes de Meta se pagan desde nuestra billetera de YCloud y se cobran dentro de la mensualidad. |
 | Railway, Anthropic | Nosotros | Hosting e IA, incluidos en la mensualidad. |
 
@@ -18,6 +18,8 @@ Si el cliente deja el servicio, desconecta el número desde su app (Configuraci�
 - Sin responder todavía: si el plan Free permite Coexistence, recargo sobre Meta y si piden método de pago antes de producción.
 
 ## El día del alta con el cliente
+
+- [ ] Antes: preguntar si Franky's ya tiene portfolio de Meta Business. La cuenta de WhatsApp del número va en el portfolio **del cliente** (nombre, documento y website coinciden con su negocio). Si no tiene, se crea en el alta con sus datos y él como administrador principal; nosotros como segundo administrador. YCloud sigue siendo nuestro (soporte de YCloud no confirmó si un portfolio de agencia puede ser dueño; ticket #2271 cerrado sin respuesta).
 
 - [ ] Desactivar en la app el **mensaje de bienvenida** y el **mensaje de ausencia** (si no, el cliente recibe esa respuesta y la del bot).
 - [ ] Avisarles: las listas de difusión quedan de solo lectura, no se pueden editar ni borrar mensajes, se apagan los mensajes temporales.
