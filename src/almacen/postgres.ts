@@ -1,5 +1,5 @@
 import pg from 'pg';
-import type { Almacen, ClaveContador, Conversacion, Ficha } from './tipos.js';
+import type { Almacen, ClaveContador, Conversacion, DatosReporte, Direccion, Ficha, MensajeGuardado } from './tipos.js';
 
 const ESQUEMA = `
 CREATE TABLE IF NOT EXISTS conversaciones (
@@ -65,7 +65,7 @@ export class AlmacenPostgres implements Almacen {
     );
   }
 
-  async registrarMensaje(telefono: string, direccion: string, texto: string) {
+  async registrarMensaje(telefono: string, direccion: Direccion, texto: string) {
     await this.pool.query('INSERT INTO mensajes (telefono, direccion, texto) VALUES ($1, $2, $3)', [
       telefono,
       direccion,
@@ -103,6 +103,28 @@ export class AlmacenPostgres implements Almacen {
       [dia, usd],
     );
     return Number(r.rows[0]?.usd ?? usd);
+  }
+
+  async datosReporte(desde: Date, hasta: Date, diaDesde: string, diaHasta: string): Promise<DatosReporte> {
+    // Del texto solo interesan los botones tocados ("[Precio del oro]"): no se lee lo que escribió el cliente.
+    const mensajes = await this.pool.query<MensajeGuardado>(
+      `SELECT telefono, direccion, CASE WHEN texto LIKE '[%]' THEN left(texto, 80) ELSE '' END AS texto, creado
+       FROM mensajes WHERE creado >= $1 AND creado < $2`,
+      [desde, hasta],
+    );
+    const fichas = await this.pool.query<{ tipo: string; fuera: boolean | null; creada: Date }>(
+      `SELECT tipo, (datos->>'fueraDeHorario')::boolean AS fuera, creada FROM fichas WHERE creada >= $1 AND creada < $2`,
+      [desde, hasta],
+    );
+    const gastos = await this.pool.query<{ dia: string; usd: string }>(
+      'SELECT dia::text AS dia, usd FROM gastos WHERE dia >= $1::date AND dia < $2::date',
+      [diaDesde, diaHasta],
+    );
+    return {
+      mensajes: mensajes.rows,
+      fichas: fichas.rows.map((f) => ({ tipo: f.tipo, fueraDeHorario: f.fuera ?? false, creada: f.creada })),
+      gastosIA: gastos.rows.map((g) => ({ dia: g.dia, usd: Number(g.usd) })),
+    };
   }
 
   /** Retención: borra mensajes, conversaciones inactivas, fichas y contadores viejos. */

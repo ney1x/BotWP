@@ -139,6 +139,20 @@ describe('motor', () => {
     expect(textos()[1]).toContain('Ya avisé');
   });
 
+  test('el aviso al asesor queda registrado como mensaje cobrable', async () => {
+    const motor = crearMotor();
+    await texto(motor, 'quiero hablar con un asesor');
+    expect(almacen.mensajes.filter((m) => m.direccion === 'aviso')).toMatchObject([{ telefono: ASESOR, texto: '[ficha asesor]' }]);
+  });
+
+  test('sin ASESOR_WHATSAPP: ficha guardada, sin mensaje aparte', async () => {
+    const motor = crearMotor(undefined, { ASESOR_WHATSAPP: '' });
+    await texto(motor, 'quiero hablar con un asesor');
+    expect(almacen.fichas).toHaveLength(1);
+    expect(enviados.every((e) => e.para === TEL)).toBe(true);
+    expect(almacen.mensajes.some((m) => m.direccion === 'aviso')).toBe(false);
+  });
+
   test('pedir asesor fuera de horario avisa cuándo abren', async () => {
     ahora = DateTime.fromISO('2026-11-08T12:00', { zone: zona }).toJSDate(); // domingo
     const motor = crearMotor();

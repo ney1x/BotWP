@@ -15,8 +15,10 @@ El bot responde por la API de YCloud y el asesor sigue usando la app WhatsApp Bu
 | `YCLOUD_NUMERO` | `+17868782085` (número del negocio, formato internacional) |
 | `ANTHROPIC_API_KEY` | Key de producción (`botwp-frankys`) |
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
-| `ASESOR_WHATSAPP` | Opcional: número que recibe las fichas, solo dígitos |
+| `ASESOR_WHATSAPP` | **Vacío** (ver abajo) |
 | `FERIADOS`, `DIVISAS_CSV_URL` | Según el cliente |
+
+`ASESOR_WHATSAPP` vacío: con Coexistence el asesor ya ve cada chat en su app, así que la ficha no se manda además como mensaje aparte. Ahorra un mensaje cobrable por cada pedido de asesor. Llenarlo solo si el asesor atiende desde otro número.
 
 3. *Settings → Networking → Generate Domain*. Verificar `https://<dominio>/salud` → `{"ok":true,"proveedor":"ycloud"}`.
 
@@ -42,3 +44,17 @@ Seguir el checklist de [PENDIENTES.md](PENDIENTES.md#el-día-del-alta-con-el-cli
 ## 5. Prueba
 
 Desde un celular que no sea el del negocio, escribir "hola" al número. Luego, desde la app del negocio, responder a mano en ese chat y confirmar que el bot deja de contestar.
+
+## 6. Reporte mensual
+
+Muestra el uso real de Franky's para ajustar la cuenta: mensajes cobrables (respuestas del bot + avisos a `ASESOR_WHATSAPP`), promedio diario desde el primer mensaje, proyección del mes contra los 1.000 gratis, fichas por tipo, horas pico, botones más tocados y gasto de IA. Los mensajes que el asesor escribe desde la app no cuentan.
+
+Desde la PC, con la URL **pública** de Postgres (Railway → Postgres → *Variables* → `DATABASE_PUBLIC_URL`):
+
+```powershell
+$env:DATABASE_URL = "<DATABASE_PUBLIC_URL>"
+npm run reporte
+npm run reporte -- 2026-11
+```
+
+Sin mes, toma el mes en curso (marcado como parcial). Solo hay datos de los últimos `RETENCION_DIAS` (90). Los gratis y el precio por mensaje se ajustan con `YCLOUD_GRATIS_MES` y `YCLOUD_USD_MENSAJE`.
