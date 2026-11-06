@@ -94,7 +94,8 @@ export function firmaValida(cuerpoCrudo: string, firma: string | undefined, appS
 
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-function contenidoDe(m: Json): Contenido {
+/** Convierte un mensaje en formato nativo de WhatsApp (Cloud API y YCloud usan el mismo). */
+export function contenidoDe(m: Json): Contenido {
   switch (m.type) {
     case 'text':
       return { clase: 'texto', texto: String(m.text?.body ?? '') };

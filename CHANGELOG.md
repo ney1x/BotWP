@@ -4,6 +4,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Unreleased]
 
+### Added
+- Adaptador de YCloud para producción con Coexistence (`WA_PROVEEDOR=ycloud`): envío por `sendDirectly`, webhooks `whatsapp.inbound_message.received` y `whatsapp.smb.message.echoes`, y verificación de la firma `YCloud-Signature`.
+- Guía de producción con YCloud y Railway (`docs/PRODUCCION.md`).
+
 ## [0.1.0] - 2026-11-05
 
 MVP para la demo con el número de prueba de Meta.

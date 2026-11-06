@@ -14,7 +14,11 @@ const Esquema = z.object({
   PORT: z.coerce.number().int().default(3000),
 
   // WhatsApp
-  WA_PROVEEDOR: z.enum(['cloud']).default('cloud'),
+  // cloud = Meta directo (demo con número de prueba) · ycloud = producción con Coexistence
+  WA_PROVEEDOR: z.enum(['cloud', 'ycloud']).default('cloud'),
+  YCLOUD_API_KEY: z.string().optional(),
+  YCLOUD_WEBHOOK_SECRET: z.string().optional(), // secreto del endpoint de webhook en YCloud
+  YCLOUD_NUMERO: z.string().optional(), // número del negocio, ej. +17868782085
   WA_TOKEN: z.string().optional(),
   WA_PHONE_NUMBER_ID: z.string().optional(),
   WA_APP_SECRET: z.string().optional(),
