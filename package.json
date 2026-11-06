@@ -1,6 +1,6 @@
 {
   "name": "botwp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Bot de WhatsApp para Franky's Efectivo (Miami): precio del oro, divisas, tienda, empeño y paso a asesor.",
   "type": "module",
