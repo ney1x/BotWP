@@ -6,6 +6,7 @@ import { Motor } from './bot/motor.js';
 import { cargarConocimiento } from './conocimiento.js';
 import type { Config } from './config.js';
 import { FuenteDivisas } from './datos/divisas.js';
+import { FuenteDivisasWix } from './datos/divisasWix.js';
 import { FuenteOro } from './datos/oro.js';
 import { FuenteTienda } from './datos/tienda.js';
 import { log } from './log.js';
@@ -26,7 +27,9 @@ export function armarMotor(config: Config, wa: ProveedorWhatsApp) {
     ia,
     oro: new FuenteOro(config.ORO_URL),
     tienda: new FuenteTienda(config.TIENDA_API_URL),
-    divisas: new FuenteDivisas(config.DIVISAS_CSV_URL, { zona: config.ZONA_HORARIA, feriados: config.FERIADOS }),
+    divisas: config.DIVISAS_CSV_URL
+      ? new FuenteDivisas(config.DIVISAS_CSV_URL, { zona: config.ZONA_HORARIA, feriados: config.FERIADOS })
+      : new FuenteDivisasWix(),
     conocimiento: cargarConocimiento(),
   });
   return { motor, almacen };

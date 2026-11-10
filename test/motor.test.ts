@@ -60,7 +60,12 @@ const wa: ProveedorWhatsApp = {
   },
 };
 
-function crearMotor(ia?: ProveedorIA, extra: Record<string, string> = {}, tienda = new FuenteTienda('http://wc', fetchFalso)) {
+function crearMotor(
+  ia?: ProveedorIA,
+  extra: Record<string, string> = {},
+  tienda = new FuenteTienda('http://wc', fetchFalso),
+  divisas: Pick<FuenteDivisas, 'obtener'> = new FuenteDivisas(undefined, { zona, feriados: [] }),
+) {
   return new Motor({
     config: configPorDefecto({ ASESOR_WHATSAPP: ASESOR, LIMITE_RESPUESTAS_DIA: '5', ...extra }),
     wa,
@@ -68,7 +73,7 @@ function crearMotor(ia?: ProveedorIA, extra: Record<string, string> = {}, tienda
     ia,
     oro: new FuenteOro('http://gold', fetchFalso),
     tienda,
-    divisas: new FuenteDivisas(undefined, { zona, feriados: [] }),
+    divisas,
     conocimiento: 'kb',
     reloj: () => ahora,
   });
@@ -111,6 +116,21 @@ describe('motor', () => {
     expect(textos()[0]).toContain('24K: $118');
     await texto(motor, 'tengo 5 g de 18k');
     expect(textos()[1]).toContain('$455');
+  });
+
+  test('identifica las tasas de Wix como referenciales en el menú y en la herramienta de la IA', async () => {
+    const ia = new IAFalsa(async (p) => {
+      expect(await p.ejecutar('tasas_divisas', {})).toMatch(/^REFERENCIAL:.*\nEUR: compra 1\.1, venta 1\.18$/);
+      return { texto: 'La tasa de venta publicada es de 1.18 USD por euro. Es referencial.', costoUsd: 0, rechazo: false };
+    });
+    const motor = crearMotor(ia, undefined, undefined, {
+      obtener: async () => ({ estado: 'referencial', tasas: [{ moneda: 'EUR', compra: 1.10, venta: 1.18 }] }),
+    });
+    await opcion(motor, ID.DIVISAS);
+    expect(textos()[0]).toContain('Tasas de cambio referenciales publicadas');
+    expect(textos()[0]).toContain('EUR: compra $1.1 · venta $1.18');
+    await texto(motor, '¿Cuánto me cuesta comprar euros?');
+    expect(textos()[1]).toContain('1.18 USD por euro. Es referencial.');
   });
 
   test('webhook repetido no responde dos veces', async () => {

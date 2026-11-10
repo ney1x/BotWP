@@ -101,8 +101,8 @@ export const T = {
   oroSinQuilate: (quilates: number) =>
     `No tengo precio publicado para ${quilates}k. Un asesor puede cotizarle esa pieza.`,
 
-  divisasVigentes: (lineas: string) =>
-    `*Tasas de cambio de hoy* (USD por unidad):\n${lineas}\n\nLas tasas pueden variar según el monto. ¿Desea que un asesor le confirme la operación?`,
+  divisasTasas: (lineas: string, referencial: boolean) =>
+    `*${referencial ? 'Tasas de cambio referenciales publicadas' : 'Tasas de cambio de hoy'}* (USD por unidad)\n${lineas}\n\nLas tasas pueden variar. ¿Desea que un asesor le confirme la operación?`,
 
   divisasConsultar:
     'Las tasas de cambio se confirman en el momento con un asesor, porque varían durante el día. ¿Desea que le escriba uno?',
