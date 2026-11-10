@@ -19,7 +19,7 @@ export interface Dependencias {
   almacen: Almacen;
   oro: FuenteOro;
   tienda: FuenteTienda;
-  divisas: FuenteDivisas;
+  divisas: Pick<FuenteDivisas, 'obtener'>;
   ia?: ProveedorIA;
   conocimiento: string;
   reloj?: () => Date;
@@ -201,7 +201,7 @@ export class Motor {
     const ahora = this.ahora();
     const acciones: Accion[] = [];
     const ejecutar = crearEjecutor(
-      { oro: () => this.d.oro.obtener(), divisas: () => this.d.divisas.obtener(), tienda: this.d.tienda },
+      { oro: () => this.d.oro.obtener(), divisas: () => this.d.divisas.obtener(ahora), tienda: this.d.tienda },
       acciones,
     );
     let r;
@@ -289,7 +289,7 @@ export class Motor {
         const dv = await this.d.divisas.obtener(this.ahora());
         if (dv.estado === 'consultar') return [botonesMenu(T.divisasConsultar, [{ id: ID.ASESOR, titulo: 'Sí, un asesor' }])];
         const lineas = dv.tasas.map((x) => `• ${x.moneda}: compra $${x.compra} · venta $${x.venta}`).join('\n');
-        return [botonesMenu(T.divisasVigentes(lineas), [{ id: ID.ASESOR, titulo: 'Hablar con asesor' }])];
+        return [botonesMenu(T.divisasTasas(lineas, dv.estado === 'referencial'), [{ id: ID.ASESOR, titulo: 'Hablar con asesor' }])];
       }
       case ID.TIENDA: {
         const cats = await this.d.tienda.categorias();

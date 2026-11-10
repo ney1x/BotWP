@@ -2,15 +2,19 @@ import { DateTime } from 'luxon';
 import { vigenteHasta, type OpcionesHorario } from '../horario.js';
 import { log, errorATexto } from '../log.js';
 
-export interface Tasa {
+export interface CotizacionDivisa {
   moneda: string;
   compra: number;
   venta: number;
+}
+
+export interface Tasa extends CotizacionDivisa {
   confirmadaEn: Date;
 }
 
 export type LecturaDivisas =
   | { estado: 'vigente'; tasas: Tasa[] }
+  | { estado: 'referencial'; tasas: CotizacionDivisa[] }
   | { estado: 'consultar'; motivo: string };
 
 type Fetch = typeof fetch;
