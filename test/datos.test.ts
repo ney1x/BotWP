@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import { describe, expect, test } from 'vitest';
 import { interpretarDivisas, parsearCsv } from '../src/datos/divisas.js';
+import { FuenteDivisasWix } from '../src/datos/divisasWix.js';
 import { estimarOro, FuenteOro, interpretarPeso } from '../src/datos/oro.js';
 import { convertirProducto, FuenteTienda } from '../src/datos/tienda.js';
 
@@ -87,7 +88,54 @@ describe('divisas', () => {
   test('faltan columnas → consultar', () => {
     expect(interpretarDivisas('moneda,compra\nEUR,1', en('2026-11-08T12:00'), horario).estado).toBe('consultar');
   });
+
+  test('Wix asocia las tasas por moneda, no por orden, y conserva decimales', async () => {
+    const compra = paginaDivisas('Compra',
+      '<p>$&nbsp;1.10</p><p>Dolares por 1 Euro</p>',
+      '<p>$0.00029</p><p>Dolares po 1 Peso Colomb.</p>',
+      '<p>$0.65</p><p>Dolares por 1 D&oacute;lar Canadie.</p>',
+    );
+    const venta = paginaDivisas('Venta',
+      '<p>$0.75</p><p>Dolares por 1 Dolar Canad iense</p>',
+      '<p>$0.00036</p><p>D&oacute;lares por 1 Peso Colombia.</p>',
+      '<p>$1.18</p><p>Dolares por 1 Euro</p>',
+    );
+    const fuente = new FuenteDivisasWix(async (url) => respuesta(String(url).endsWith('/tasa-de-cambio') ? compra : venta));
+    expect(await fuente.obtener()).toEqual({
+      estado: 'referencial',
+      tasas: [
+        { moneda: 'EUR', compra: 1.10, venta: 1.18 },
+        { moneda: 'COP', compra: 0.00029, venta: 0.00036 },
+        { moneda: 'CAD', compra: 0.65, venta: 0.75 },
+      ],
+    });
+  });
+
+  test('Wix descarta bloques ambiguos y no devuelve una tasa cacheada si venció y falla la lectura', async () => {
+    const compra = paginaDivisas('Compra',
+      '$1.10 Dolares por 1 Euro',
+      '$1.28 Dolares por 1 Libra Esterlina',
+      '$1.30 Dolares por 1 Libra Esterlina',
+    );
+    const venta = paginaDivisas('Venta', '$1.18 Dolares por 1 Euro', '$1.42 Dolares por 1 Libra Esterlina');
+    let falla = false;
+    const fuente = new FuenteDivisasWix(async (url) =>
+      falla ? respuesta('', 503) : respuesta(String(url).endsWith('/tasa-de-cambio') ? compra : venta),
+    );
+    expect(await fuente.obtener(en('2026-11-08T12:00'))).toMatchObject({
+      estado: 'referencial',
+      tasas: [{ moneda: 'EUR' }],
+    });
+    falla = true;
+    expect((await fuente.obtener(en('2026-11-08T12:04'))).estado).toBe('referencial');
+    expect((await fuente.obtener(en('2026-11-08T12:05'))).estado).toBe('consultar');
+  });
 });
+
+function paginaDivisas(tipo: 'Compra' | 'Venta', ...filas: string[]): string {
+  const bloques = filas.map((fila) => '<div data-testid="richTextElement">' + fila + '</div>').join('');
+  return '<title>Precio de ' + tipo + '</title><main>' + bloques + '</main>';
+}
 
 describe('tienda', () => {
   const wc = (id: number, extra: Record<string, unknown> = {}) => ({

@@ -33,7 +33,7 @@ export const HERRAMIENTAS: DefHerramienta[] = [
   },
   {
     nombre: 'tasas_divisas',
-    descripcion: 'Tasas de cambio confirmadas hoy (compra y venta en USD). Si no están confirmadas devuelve CONSULTAR.',
+    descripcion: 'Tasas de compra y venta en USD por unidad. Indica si las tasas publicadas son referenciales o si hay que consultar a un asesor.',
     esquema: { type: 'object', properties: {} },
   },
   {
@@ -115,7 +115,8 @@ export function crearEjecutor(fuentes: FuentesHerramientas, acciones: Accion[]) 
       case 'tasas_divisas': {
         const d = await fuentes.divisas();
         if (d.estado === 'consultar') return 'CONSULTAR: las tasas se confirman con un asesor.';
-        return d.tasas.map((t) => `${t.moneda}: compra ${t.compra}, venta ${t.venta}`).join('\n');
+        const tasas = d.tasas.map((t) => `${t.moneda}: compra ${t.compra}, venta ${t.venta}`).join('\n');
+        return d.estado === 'referencial' ? `REFERENCIAL: tasas publicadas en USD por unidad, sujetas a cambio.\n${tasas}` : tasas;
       }
       case 'buscar_joyas': {
         const b = BuscarIn.parse(entrada ?? {});
