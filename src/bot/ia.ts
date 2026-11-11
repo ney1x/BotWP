@@ -73,7 +73,17 @@ export class IAAnthropic implements ProveedorIA {
         messages,
         output_config: { effort: 'low' },
       });
-      costo += this.costo(r.usage);
+      const { usage } = r;
+      log.info('anthropic_usage', {
+        event: 'anthropic_usage',
+        response_id: r.id,
+        model: r.model,
+        input_tokens: usage.input_tokens,
+        output_tokens: usage.output_tokens,
+        cache_creation_input_tokens: usage.cache_creation_input_tokens ?? 0,
+        cache_read_input_tokens: usage.cache_read_input_tokens ?? 0,
+      });
+      costo += this.costo(usage);
 
       if (r.stop_reason === 'refusal') {
         log.warn('ia: rechazo', { categoria: r.stop_details?.category ?? null });
