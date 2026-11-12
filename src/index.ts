@@ -39,5 +39,9 @@ setInterval(purgar, 24 * 60 * 60 * 1000).unref();
 
 const app = crearServidor({ config, procesar: (e) => motor.procesar(e) });
 serve({ fetch: app.fetch, port: config.PORT }, (info) =>
-  log.info('servidor escuchando', { puerto: info.port, proveedor: config.WA_PROVEEDOR }),
+  log.info('servidor escuchando', {
+    puerto: info.port,
+    proveedor: config.WA_PROVEEDOR,
+    modo_informativo: config.MODO_INFORMATIVO,
+  }),
 );

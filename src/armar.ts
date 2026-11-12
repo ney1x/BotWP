@@ -17,8 +17,10 @@ export function armarMotor(config: Config, wa: ProveedorWhatsApp) {
   const almacen: Almacen = config.DATABASE_URL ? new AlmacenPostgres(config.DATABASE_URL) : new AlmacenMemoria();
   if (!config.DATABASE_URL) log.warn('sin DATABASE_URL: conversaciones solo en memoria (se pierden al reiniciar)');
 
-  const ia = config.ANTHROPIC_API_KEY ? new IAAnthropic(config.IA_MODELO, config.ANTHROPIC_API_KEY) : undefined;
-  if (!ia) log.warn('sin ANTHROPIC_API_KEY: el texto libre responde con el menú');
+  const ia = !config.MODO_INFORMATIVO && config.ANTHROPIC_API_KEY
+    ? new IAAnthropic(config.IA_MODELO, config.ANTHROPIC_API_KEY)
+    : undefined;
+  if (!config.MODO_INFORMATIVO && !ia) log.warn('sin ANTHROPIC_API_KEY: el texto libre responde con el menú');
 
   const motor = new Motor({
     config,
@@ -30,7 +32,7 @@ export function armarMotor(config: Config, wa: ProveedorWhatsApp) {
     divisas: config.DIVISAS_CSV_URL
       ? new FuenteDivisas(config.DIVISAS_CSV_URL, { zona: config.ZONA_HORARIA, feriados: config.FERIADOS })
       : new FuenteDivisasWix(),
-    conocimiento: cargarConocimiento(),
+    conocimiento: config.MODO_INFORMATIVO ? '' : cargarConocimiento(),
   });
   return { motor, almacen };
 }

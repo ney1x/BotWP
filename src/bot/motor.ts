@@ -11,7 +11,7 @@ import { avanzar, datosEtiquetados, FORMULARIOS, nuevoFormulario, preguntaDe } f
 import { crearEjecutor, HERRAMIENTAS, type Accion } from './herramientas.js';
 import type { ProveedorIA } from './ia.js';
 import { contextoTurno, promptSistema } from './sistema.js';
-import { botonesMenu, ID, menuPrincipal, PREFIJO, T } from './textos.js';
+import { botonesMenu, contactoKendall, ID, menuInformativo, menuPrincipal, PREFIJO, T } from './textos.js';
 
 export interface Dependencias {
   config: Config;
@@ -42,6 +42,7 @@ const RE_SALUDO = /^(hola+|buenas|buenos dias|buenas tardes|buenas noches|hi|hel
 const RE_ASESOR =
   /^(asesor|humano|representante|agente|operador)$|\b(hablar|comunicar|pasar|contactar|quiero|necesito)\b.*\b(asesor|humano|persona|representante|agente|alguien)\b/;
 const RE_CODIGO_BOT = /#bot\b/i;
+const RE_SEDES_HORARIOS = /\b(sedes?|sucursales?|horarios?|direccion(?:es)?|ubicacion(?:es)?|abren|abierto|abiertos|cierran|donde quedan|como llego)\b/;
 
 /** Evita que el nombre de perfil inyecte instrucciones en el contexto de la IA. */
 const limpiarNombre = (n?: string) =>
@@ -56,6 +57,18 @@ export function anteponer(salida: Saliente[], prefijo?: string): Saliente[] {
   const [primero, ...resto] = salida;
   if (primero && primero.clase !== 'imagen') return [{ ...primero, texto: `${prefijo}\n\n${primero.texto}` }, ...resto];
   return [{ clase: 'texto', texto: prefijo }, ...salida];
+}
+
+function responderInformativo(c: Contenido): Saliente {
+  const texto = c.clase === 'texto' ? norm(c.texto.slice(0, TEXTO_MAX)) : '';
+  const id = c.clase === 'opcion' ? c.id : undefined;
+  if (id === ID.SEDES || RE_SEDES_HORARIOS.test(texto)) return { clase: 'texto', texto: T.sedes() };
+  if (id === ID.MENU || RE_MENU.test(texto) || (texto.length <= 30 && RE_SALUDO.test(texto))) return menuInformativo();
+  if (id === ID.ASESOR || RE_ASESOR.test(texto)) return { clase: 'texto', texto: contactoKendall };
+  return {
+    clase: 'texto',
+    texto: `Por este chat puedo compartir sedes y horarios. Escriba *menú* para ver las opciones.\n\n${contactoKendall}`,
+  };
 }
 
 /** Orquesta un mensaje entrante → respuestas. Un mensaje a la vez por teléfono. */
@@ -97,6 +110,7 @@ export class Motor {
     const previa = await this.d.almacen.obtenerConversacion(tel);
     const conv = previa ?? conversacionNueva(tel, ahora);
     conv.nombre = limpiarNombre(e.nombre) ?? conv.nombre;
+    const informativo = this.d.config.MODO_INFORMATIVO;
 
     const textoLog =
       e.contenido.clase === 'texto' ? e.contenido.texto : e.contenido.clase === 'opcion' ? `[${e.contenido.titulo}]` : `[${e.contenido.clase}]`;
@@ -104,6 +118,11 @@ export class Motor {
     this.agregarTurno(conv, 'usuario', textoLog.slice(0, TEXTO_MAX));
 
     try {
+      if (informativo) {
+        conv.formulario = undefined;
+        conv.fotosSueltas = undefined;
+      }
+
       // Un asesor está atendiendo: el bot calla salvo que pidan el menú.
       if (conv.pausadoHasta && new Date(conv.pausadoHasta) > ahora) {
         const pideMenu =
@@ -114,13 +133,16 @@ export class Motor {
         conv.esperandoAsesor = undefined;
       }
 
-      const salida = await this.decidir(conv, e.contenido, !previa);
+      const salida = informativo ? [responderInformativo(e.contenido)] : await this.decidir(conv, e.contenido, !previa);
       if (salida.length === 0) return;
 
       const respuestas = await this.d.almacen.incrementar(tel, 'respuestas', diaLocal(ahora, this.horario.zona));
       const limite = this.d.config.LIMITE_RESPUESTAS_DIA;
       if (respuestas > limite + 1) return;
-      if (respuestas === limite + 1) return await this.enviar(conv, [{ clase: 'texto', texto: T.limiteRespuestas }]);
+      if (respuestas === limite + 1) {
+        const texto = informativo ? contactoKendall : T.limiteRespuestas;
+        return await this.enviar(conv, [{ clase: 'texto', texto }]);
+      }
       await this.enviar(conv, salida);
     } finally {
       conv.actualizado = ahora.toISOString();

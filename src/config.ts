@@ -16,6 +16,7 @@ const Esquema = z.object({
   // WhatsApp
   // cloud = Meta directo (demo con número de prueba) · ycloud = producción con Coexistence
   WA_PROVEEDOR: z.enum(['cloud', 'ycloud']).default('cloud'),
+  MODO_INFORMATIVO: z.enum(['true', 'false']).transform((valor) => valor === 'true').optional(),
   YCLOUD_API_KEY: z.string().optional(),
   YCLOUD_WEBHOOK_SECRET: z.string().optional(), // secreto del endpoint de webhook en YCloud
   YCLOUD_NUMERO: z.string().optional(), // número del negocio, ej. +17868782085
@@ -52,7 +53,10 @@ const Esquema = z.object({
   // Reporte mensual (cuenta de YCloud)
   YCLOUD_GRATIS_MES: z.coerce.number().int().default(1000), // mensajes gratis por mes
   YCLOUD_USD_MENSAJE: z.coerce.number().default(0.0034), // costo de cada mensaje después de los gratis
-});
+}).transform((config) => ({
+  ...config,
+  MODO_INFORMATIVO: config.MODO_INFORMATIVO ?? (config.WA_PROVEEDOR === 'ycloud'),
+}));
 
 export type Config = z.infer<typeof Esquema>;
 
