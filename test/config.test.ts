@@ -16,4 +16,12 @@ describe('config', () => {
   test('listas separadas por coma', () => {
     expect(cargarConfig({ FERIADOS: '2026-12-25, 2027-01-01' }).FERIADOS).toEqual(['2026-12-25', '2027-01-01']);
   });
+
+  test('el modo informativo arranca activo en YCloud y admite un ajuste explícito', () => {
+    expect(cargarConfig({ WA_PROVEEDOR: 'ycloud' }).MODO_INFORMATIVO).toBe(true);
+    expect(cargarConfig({ WA_PROVEEDOR: 'ycloud', MODO_INFORMATIVO: 'false' }).MODO_INFORMATIVO).toBe(false);
+    expect(cargarConfig({}).MODO_INFORMATIVO).toBe(false);
+    expect(cargarConfig({ MODO_INFORMATIVO: 'true' }).MODO_INFORMATIVO).toBe(true);
+    expect(() => cargarConfig({ MODO_INFORMATIVO: 'si' })).toThrow(/MODO_INFORMATIVO/);
+  });
 });

@@ -37,6 +37,19 @@ export const SEDES = {
   },
 };
 
+export const contactoKendall = `Para hablar con nuestro equipo, llame a Kendall al *${SEDES.kendall.telefono}*.`;
+
+export function menuInformativo(): Saliente {
+  return {
+    clase: 'botones',
+    texto: 'Hola, soy el asistente virtual de *Franky’s Efectivo*. Puedo compartir nuestras sedes, horarios y teléfono de atención.',
+    botones: [
+      { id: ID.SEDES, titulo: 'Sedes y horarios' },
+      { id: ID.ASESOR, titulo: 'Teléfono de atención' },
+    ],
+  };
+}
+
 export const botonesMenu = (texto: string, extra: { id: string; titulo: string }[] = []): Saliente => ({
   clase: 'botones',
   texto,

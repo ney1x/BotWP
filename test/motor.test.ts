@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { AlmacenMemoria } from '../src/almacen/memoria.js';
 import type { PeticionIA, ProveedorIA, RespuestaIA } from '../src/bot/ia.js';
 import { Motor } from '../src/bot/motor.js';
-import { ID } from '../src/bot/textos.js';
+import { ID, SEDES } from '../src/bot/textos.js';
 import { configPorDefecto } from '../src/config.js';
 import { FuenteDivisas } from '../src/datos/divisas.js';
 import { FuenteOro } from '../src/datos/oro.js';
@@ -90,6 +90,65 @@ beforeEach(() => {
   enviados = [];
   almacen = new AlmacenMemoria();
   ahora = DateTime.fromISO('2026-11-09T11:00', { zone: zona }).toJSDate(); // lunes, abierto
+});
+
+describe('modo informativo', () => {
+  test('el menú de YCloud solo ofrece sedes, horarios y teléfono de atención', async () => {
+    const motor = crearMotor(undefined, { WA_PROVEEDOR: 'ycloud' });
+    await texto(motor, 'Hola');
+    await texto(motor, '¿Dónde quedan las sucursales y en qué horario abren?');
+    await opcion(motor, ID.ASESOR);
+    expect(alCliente()[0]).toMatchObject({ clase: 'botones', botones: [{ id: ID.SEDES }, { id: ID.ASESOR }] });
+    expect(textos()[1]).toContain(SEDES.kendall.direccion);
+    expect(textos()[1]).toContain(SEDES.doral.direccion);
+    expect(textos()[1]).toContain('9:00 a 18:30');
+    expect(textos()[2]).toContain(SEDES.kendall.telefono);
+    expect(almacen.fichas).toHaveLength(0);
+    expect(enviados.every((e) => e.para === TEL)).toBe(true);
+  });
+
+  test('el texto, los adjuntos y los botones antiguos no abren flujos ni llaman a Claude', async () => {
+    const ia = new IAFalsa(async () => ({ texto: 'Respuesta de IA', costoUsd: 0, rechazo: false }));
+    let consultasDivisas = 0;
+    const motor = crearMotor(ia, { WA_PROVEEDOR: 'ycloud', LIMITE_RESPUESTAS_DIA: '20' }, undefined, {
+      obtener: async () => {
+        consultasDivisas++;
+        return { estado: 'consultar', motivo: 'Fuente de prueba' };
+      },
+    });
+
+    await texto(motor, '¿Cuánto me dan por cambiar 100 euros?');
+    await texto(motor, 'Quiero un préstamo sin garantía');
+    await texto(motor, 'tengo 5 g de 18k');
+    await msg(motor, { clase: 'imagen', mediaId: 'foto' });
+    await msg(motor, { clase: 'audio' });
+    for (const id of [ID.DIVISAS, ID.VEHICULO, ID.EMPENO, ID.ORO, ID.TIENDA, 'FORM:domicilio', 'PROD:7']) {
+      await opcion(motor, id);
+    }
+
+    expect(textos()).toHaveLength(12);
+    expect(textos().every((t) => t.includes(SEDES.kendall.telefono))).toBe(true);
+    expect(consultasDivisas).toBe(0);
+    expect(ia.peticiones).toHaveLength(0);
+    expect(almacen.fichas).toHaveLength(0);
+    expect((await almacen.obtenerConversacion(TEL))?.fotosSueltas).toBeUndefined();
+  });
+
+  test('cancela un formulario previo y conserva el contacto directo al superar el límite', async () => {
+    await opcion(crearMotor(), 'FORM:vehiculo');
+    expect((await almacen.obtenerConversacion(TEL))?.formulario).toBeDefined();
+    const motor = crearMotor(undefined, { WA_PROVEEDOR: 'ycloud', LIMITE_RESPUESTAS_DIA: '2' });
+    await opcion(motor, ID.NO);
+    await opcion(motor, ID.ASESOR);
+    await texto(motor, 'Hola');
+
+    expect((await almacen.obtenerConversacion(TEL))?.formulario).toBeUndefined();
+    expect(almacen.fichas).toHaveLength(0);
+    expect(textos()).toHaveLength(3);
+    expect(textos()[1]).toContain(SEDES.kendall.telefono);
+    expect(textos()[2]).toContain(SEDES.kendall.telefono);
+    expect(enviados.every((e) => e.para === TEL)).toBe(true);
+  });
 });
 
 describe('motor', () => {
