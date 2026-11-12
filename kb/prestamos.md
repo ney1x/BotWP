@@ -2,6 +2,10 @@
 
 Reglas para el bot: nunca dar montos de préstamo, tasas de interés, plazos, cargos ni condiciones de renovación. Tampoco saldos ni vencimientos de empeños existentes. Todo eso lo responde un asesor.
 
+## Préstamo sin garantía
+- Si el cliente pregunta por un préstamo sin garantía o dice que no tiene una, invítelo a visitar la oficina de Kendall. Allí le orientamos sobre las opciones de préstamo.
+- Mencione que es importante contar con un buen puntaje de crédito. Si pregunta por requisitos específicos, remítalo a la oficina de Kendall.
+
 ## Préstamo con garantía de joyas (en tienda)
 - El cliente trae su oro o reloj (Rolex, Cartier) a una sede.
 - Expertos verifican peso y pureza frente al cliente y hacen una oferta.
