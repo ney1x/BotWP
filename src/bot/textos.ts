@@ -122,7 +122,7 @@ export const T = {
 
   empeno:
     '*Préstamo con garantía de joyas* 💍\nTraiga su oro o su reloj (Rolex, Cartier), también piezas rotas. Lo evaluamos frente a usted y, si acepta la oferta, recibe el dinero al instante. Su joya queda resguardada hasta que pague el préstamo.\n\nNo aceptamos bisutería ni enchapados. El monto, el interés y el plazo se los da un asesor según su pieza.' +
-    `\n\nSi no tiene una garantía, visite nuestra oficina de *Kendall* (${SEDES.kendall.direccion}). Allí le orientaremos sobre las opciones de préstamo. Es importante contar con un buen puntaje de crédito.`,
+    `\n\nSi no tiene una joya o un vehículo para dejar en garantía, puede consultar en persona en nuestra oficina de *Kendall* (${SEDES.kendall.direccion}).`,
 
   vehiculo:
     '*Préstamo con garantía de vehículo* 🚗\nHasta el 50 % del valor comercial, sin revisar su crédito. Aceptamos autos, motos, camiones y botes.\n\nRequisitos: vehículo libre de deuda, título a su nombre e identificación oficial. El vehículo queda resguardado en nuestras instalaciones durante el préstamo.',
