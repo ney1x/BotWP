@@ -48,6 +48,11 @@ export class AlmacenMemoria implements Almacen {
     return id;
   }
 
+  async actualizarFicha(id: string, cambios: Partial<Ficha>) {
+    const f = this.fichas.find((x) => x.id === id);
+    if (f) Object.assign(f, cambios, { id });
+  }
+
   async sumarGasto(dia: string, usd: number) {
     const v = (this.gastos.get(dia) ?? 0) + usd;
     this.gastos.set(dia, v);
@@ -63,6 +68,12 @@ export class AlmacenMemoria implements Almacen {
         .filter((f) => dentro(f.creada)),
       gastosIA: [...this.gastos].filter(([dia]) => dia >= diaDesde && dia < diaHasta).map(([dia, usd]) => ({ dia, usd })),
     };
+  }
+
+  async seguimientosVencidos(hasta: Date) {
+    return [...this.conversaciones.values()]
+      .filter((c) => c.seguimiento?.estado === 'programado' && new Date(c.seguimiento.cuando) <= hasta)
+      .map((c) => c.telefono);
   }
 
   async purgar(antesDe: Date) {

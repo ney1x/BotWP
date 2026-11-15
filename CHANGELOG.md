@@ -4,6 +4,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Unreleased]
 
+### Fixed
+- Si el aviso a `ASESOR_WHATSAPP` falla (por ejemplo, YCloud lo rechaza), el bot ya no le promete un asesor al cliente: le ofrece *Reintentar* y el teléfono de Kendall. El siguiente pedido reenvía la misma ficha en vez de responder «Ya avisé». Antes de rendirse, el envío se reintenta una vez.
+- «Déjame lo pienso» a mitad de un formulario ya no se guarda como respuesta (por ejemplo, como nombre de la pieza).
+- Los botones *Retomar*, *Hablar con asesor* y *Ver menú* tocados con un formulario abierto ya no se guardan como respuesta. *Hablar con asesor* pasa los datos parciales.
+- La descarga de fotos solo manda la API key (YCloud) o el token (Cloud API) por HTTPS al dominio del proveedor, y no sigue redirecciones con credenciales.
+- Las fotos de una consulta anterior ya no se mezclan con las nuevas: se descartan al tocar otro botón, «menú» o un saludo.
+- Si fallan reenvíos de fotos al asesor, le llega un aviso corto con cuántas faltan, y la ficha guarda `fotosReenviadas` y `fotosFallidas`.
+
+### Added
+- Seguimiento único dentro de la ventana de 24 h de Meta (sin plantilla y sin pedir permiso, que la política no exige dentro de la ventana): si el cliente dice que lo va a pensar, el bot le avisa a qué hora le escribirá (botón *No me escriba*); si deja un formulario a medias, le recuerda 2 h después. Siempre en horario de atención; si no hay horario dentro de la ventana, no se programa. Máximo uno por ventana. Se cancela si el cliente vuelve a escribir o un asesor toma el chat. *No me escriba* y *No, gracias* desactivan los seguimientos de ese contacto.
+- Con `WA_PROVEEDOR=ycloud` y el flujo completo, `YCLOUD_WEBHOOK_SECRET` es obligatorio.
+- Fotos sueltas: la pregunta ofrece *Cotizar pieza* o *Es otra cosa* (pasa a asesor), y se hace una sola vez por ráfaga de fotos. El aviso al asesor reenvía hasta 3 fotos (descarga, subida y envío por id en YCloud y Cloud API).
+- CRM mínimo en la conversación (`crm`): estado comercial, responsable, próxima acción y cuándo. Las fichas guardan `avisado`, `estado`, `responsable` y `proximaAccion`.
+- Cuando el cliente pide un asesor directamente, la ficha incluye sus últimos 3 mensajes como contexto.
+
 ## [0.2.0] - 2026-11-06
 
 Producción con YCloud (Coexistence) y reporte mensual.

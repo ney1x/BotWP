@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { log } from '../log.js';
-import { contenidoDe, cuerpoCloud } from './cloudApi.js';
+import { contenidoDe, cuerpoCloud, descargarMedia } from './cloudApi.js';
 import type { Entrante, ProveedorWhatsApp, Saliente } from './tipos.js';
 
 /**
@@ -43,6 +43,27 @@ export class YCloudApi implements ProveedorWhatsApp {
       if (e instanceof SyntaxError) return; // respuesta sin JSON: se da por enviada
       throw e;
     }
+  }
+
+  /** Descarga el `link` del webhook (con la API key), lo sube a YCloud y lo envía por id. */
+  async reenviarImagen(para: string, ref: string, caption?: string): Promise<void> {
+    if (!/^https:\/\//.test(ref)) throw new Error('YCloud: la foto no trae enlace de descarga');
+    const auth = { 'X-API-Key': this.o.apiKey };
+    const base = this.o.url ? new URL(this.o.url).origin : 'https://api.ycloud.com';
+    // La API key solo viaja al dominio de YCloud (o al configurado en `url`).
+    const hostApi = new URL(base).hostname;
+    const archivo = await descargarMedia(this.f, ref, auth, (host) => host === hostApi);
+    const form = new FormData();
+    form.append('file', archivo, 'foto');
+    const sub = await this.f(`${base}/v2/whatsapp/media/${encodeURIComponent(e164(this.o.numero))}/upload`, {
+      method: 'POST',
+      headers: auth,
+      body: form,
+    });
+    if (!sub.ok) throw new Error(`YCloud subida ${sub.status}: ${(await sub.text().catch(() => '')).slice(0, 300)}`);
+    const { id } = (await sub.json()) as { id?: string };
+    if (!id) throw new Error('YCloud subida: sin id');
+    await this.enviar(para, { clase: 'imagen', mediaId: id, caption });
   }
 }
 

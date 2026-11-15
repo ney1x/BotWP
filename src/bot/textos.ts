@@ -19,6 +19,10 @@ export const ID = {
   NO: 'NO',
   LISTO: 'LISTO',
   CANCELAR: 'CANCELAR',
+  FOTO_OTRA: 'FOTO_OTRA',
+  SEG_NO: 'SEG_NO',
+  SEG_RETOMAR: 'SEG_RETOMAR',
+  SEG_FIN: 'SEG_FIN',
 } as const;
 
 export const PREFIJO = { CATEGORIA: 'CAT:', PRODUCTO: 'PROD:', FORMULARIO: 'FORM:' } as const;
@@ -144,12 +148,26 @@ export const T = {
   asesorCerrado: (cuando: string) =>
     `Ahora estamos cerrados. Abrimos ${cuando} y un asesor le escribirá apenas abramos. Mientras tanto, puedo ayudarle con lo que necesite.`,
   asesorYaPedido: 'Ya avisé a un asesor; le escribirá por este chat. Mientras tanto, ¿le ayudo con algo más?',
+  asesorFallo:
+    `No pude avisar a un asesor en este momento 🙏 Toque *Reintentar* en unos minutos o llame a Kendall al *${SEDES.kendall.telefono}*.`,
 
   audio: 'Por ahora no puedo escuchar audios 🙏 Escríbame su consulta o, si prefiere, le paso con un asesor.',
-  fotoSuelta: 'Recibí su foto 📷 ¿Quiere que un asesor cotice esa pieza?',
+  fotoSuelta:
+    'Recibí su foto 📷 Trabajamos con oro, joyas y relojes. Si es una de esas piezas, toque *Cotizar pieza* y le pido unos datos. Si es otra cosa, un asesor la revisa.',
+  fotoOtra: 'Le paso la foto a un asesor para que la revise.',
   otroTipo: 'Recibí su mensaje, pero solo puedo leer texto y fotos.',
   noEntendi: 'No estoy seguro de haberle entendido. Elija una opción del menú o escriba su pregunta de otra forma.',
   errorTecnico: 'Tuve un problema técnico al responder. Por favor elija una opción del menú o pida hablar con un asesor.',
+
+  pensarlo: 'Claro, sin apuro 🙂 Cuando quiera retomarlo, escríbame aquí.',
+  pensarloAgendado: (cuando: string) => `Claro, sin apuro 🙂 Le escribo ${cuando} por si desea retomarlo.`,
+  sinSeguimiento: 'Entendido, no le escribiremos. Cuando quiera retomarlo, escríbame aquí.',
+  seguimientoPensarlo: (tema: string, nombre?: string) =>
+    `Hola${nombre ? ` ${nombre}` : ''} 👋 Le escribo, como le comenté, sobre ${tema}. ¿Desea retomarlo?`,
+  seguimientoFormulario: (tema: string, nombre?: string) =>
+    `Hola${nombre ? ` ${nombre}` : ''} 👋 Quedó pendiente ${tema}. ¿Desea continuar donde lo dejó?`,
+  retomar: 'Perfecto, seguimos donde lo dejamos.',
+  noInteresado: 'Entendido, gracias por avisarnos. Aquí estamos cuando nos necesite.',
 
   limiteRespuestas:
     'Hemos llegado al límite de respuestas automáticas por hoy. Si necesita ayuda, un asesor puede atenderle por este chat.',

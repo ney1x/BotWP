@@ -142,7 +142,7 @@ export function crearEjecutor(fuentes: FuentesHerramientas, acciones: Accion[]) 
       case 'pasar_a_asesor': {
         const a = AsesorIn.parse(entrada ?? {});
         acciones.push({ tipo: 'asesor', motivo: a.motivo });
-        return 'Asesor avisado: el sistema le confirma al cliente. No digas horarios de respuesta.';
+        return 'Solicitud registrada: el sistema le confirma al cliente si el aviso al asesor salió. No digas tú que un asesor le escribirá ni des horarios de respuesta.';
       }
       case 'mostrar_menu':
         acciones.push({ tipo: 'menu' });
