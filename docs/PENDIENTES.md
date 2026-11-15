@@ -44,6 +44,10 @@ Gana: sin intermediario ni límites de planes. Costo: semanas de verificación y
 - [x] Reporte mensual (`npm run reporte`): mensajes cobrables, proyección contra los gratis de YCloud, fichas, horas pico, botones y gasto de IA. Falta: versión para enviar al cliente.
 - [ ] Evaluación con ~50 preguntas reales: Haiku 5.5 vs. gpt-5-nano.
 - [ ] Menús y textos fijos en inglés.
+- [ ] Probar en YCloud real el reenvío de fotos al asesor (`reenviarImagen`): solo está probado con respuestas simuladas.
+- [x] `test/postgres.test.ts` contra PostgreSQL 17 real en Docker (2026-11-15): conversación, CRM, seguimiento y ficha sobreviven al reinicio.
+- [ ] Avisos a `ASESOR_WHATSAPP`: ese número tiene su propia ventana de 24 h con el negocio. Si el asesor no escribió al número del negocio en las últimas 24 h, el aviso falla (el bot lo detecta y le da al cliente el teléfono de Kendall). Para que llegue siempre hace falta una plantilla de utilidad aprobada para el aviso.
+- [ ] Seguimiento fuera de la ventana de 24 h: hoy no se envía. Si se quiere, hace falta una plantilla de *utilidad* aprobada (las de marketing a números de EE. UU. siguen pausadas).
 
 ## Con el cliente
 

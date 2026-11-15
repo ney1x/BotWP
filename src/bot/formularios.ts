@@ -16,12 +16,15 @@ interface Paso {
 export interface DefFormulario {
   tipo: string;
   motivo: string;
+  /** Cómo se nombra en el mensaje de seguimiento ("le escribo sobre …"). */
+  tema: string;
   pasos: Paso[];
 }
 
 export const FORMULARIOS: Record<string, DefFormulario> = {
   reloj: {
     tipo: 'reloj',
+    tema: 'la cotización de su pieza',
     motivo: 'Cotización de reloj o joya',
     pasos: [
       { campo: 'pieza', etiqueta: 'Pieza', tipo: 'texto', pregunta: '¿Qué pieza desea cotizar? Por ejemplo: reloj Rolex, anillo de oro con diamante, cadena 14k.' },
@@ -33,6 +36,7 @@ export const FORMULARIOS: Record<string, DefFormulario> = {
   },
   domicilio: {
     tipo: 'domicilio',
+    tema: 'el préstamo a domicilio',
     motivo: 'Préstamo a domicilio: solicitud de visita',
     pasos: [
       { campo: 'nombre', etiqueta: 'Nombre', tipo: 'texto', pregunta: 'Para agendar la visita, ¿cuál es su nombre completo?' },
@@ -44,6 +48,7 @@ export const FORMULARIOS: Record<string, DefFormulario> = {
   },
   vehiculo: {
     tipo: 'vehiculo',
+    tema: 'el préstamo con garantía de su vehículo',
     motivo: 'Préstamo con garantía de vehículo',
     pasos: [
       { campo: 'libre_deuda', etiqueta: 'Libre de deuda', tipo: 'si_no', pregunta: '¿El vehículo está libre de deuda (sin financiamiento pendiente)?', siNoCorta: 'El vehículo tiene deuda.' },
@@ -57,6 +62,7 @@ export const FORMULARIOS: Record<string, DefFormulario> = {
   },
   cita_doral: {
     tipo: 'cita_doral',
+    tema: 'su cita en Doral',
     motivo: 'Solicitud de cita en Doral',
     pasos: [
       { campo: 'nombre', etiqueta: 'Nombre', tipo: 'texto', pregunta: 'Con gusto le agendamos en Doral. ¿Cuál es su nombre?' },
@@ -119,7 +125,8 @@ export function avanzar(f: EstadoFormulario, c: Contenido): ResultadoPaso {
 
   // Una foto se guarda en cualquier paso.
   if (c.clase === 'imagen') {
-    if (c.mediaId) f.fotos.push(c.mediaId);
+    const ref = c.url ?? c.mediaId;
+    if (ref) f.fotos.push(ref);
     if (paso.tipo === 'fotos') {
       return {
         estado: 'sigue',

@@ -24,7 +24,7 @@ const consola: ProveedorWhatsApp = {
         bot(m.texto);
         break;
       case 'imagen':
-        bot(`🖼  ${m.url}\n${m.caption ?? ''}`);
+        bot(`🖼  ${m.url ?? m.mediaId}\n${m.caption ?? ''}`);
         break;
       case 'botones':
         opciones = m.botones;
