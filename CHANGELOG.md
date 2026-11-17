@@ -18,6 +18,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - Fotos sueltas: la pregunta ofrece *Cotizar pieza* o *Es otra cosa* (pasa a asesor), y se hace una sola vez por ráfaga de fotos. El aviso al asesor reenvía hasta 3 fotos (descarga, subida y envío por id en YCloud y Cloud API).
 - CRM mínimo en la conversación (`crm`): estado comercial, responsable, próxima acción y cuándo. Las fichas guardan `avisado`, `estado`, `responsable` y `proximaAccion`.
 - Cuando el cliente pide un asesor directamente, la ficha incluye sus últimos 3 mensajes como contexto.
+- Baja por texto: «no me escriban», «stop», «baja» o «no quiero mensajes» cancelan el formulario y desactivan los seguimientos (la política de WhatsApp exige respetar toda baja).
+
+### Changed
+- Alineado con la guía de Meta Support (16-nov-2026) y la WhatsApp Commerce Policy (`REAL_FAKE_CURRENCY`, `MISLEADING`, `SCAM`):
+  - Cambio de divisas fuera del chat: sale del menú, de la bienvenida y de la IA (se quita la herramienta `tasas_divisas`). Si el cliente pregunta, o toca un botón viejo, recibe un texto fijo sin pasar por la IA: el cambio se hace en persona en las sedes y las tasas se confirman ahí. `src/datos/divisas*.ts` y `DIVISAS_CSV_URL` quedan sin uso.
+  - Envío de joyas por correo: sale del menú y solo se explica si el cliente lo pregunta (texto fijo). Aclara que la evaluación y cualquier oferta se hacen al recibir la pieza en la tienda y que nunca se piden pagos por adelantado.
+  - Textos más suaves y sin promesas: sin «dinero al instante», «sin revisar crédito» ni porcentajes del valor. La IA tiene reglas contra la urgencia, contra frases como «aprobado» o «garantizado» y contra dar direcciones de envío.
 
 ## [0.2.0] - 2026-11-06
 

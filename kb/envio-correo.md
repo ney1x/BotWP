@@ -1,5 +1,7 @@
 # Vender o empeñar enviando por correo (solo EE.UU.)
 
+Solo se explica si el cliente lo pregunta. La evaluación y cualquier oferta se hacen al recibir la pieza en la tienda; nunca se pide pago por adelantado ni datos de tarjeta o banco, y no se garantiza ningún valor.
+
 1. Meta sus joyas en una doble bolsa con cierre (tipo Ziplock) junto con una copia de su identificación (cédula o pasaporte). Selle con cinta de seguridad.
 2. Ponga la bolsa en un sobre y envíelo por FedEx o USPS. Guarde el número de rastreo.
 3. Cuando llega el paquete, Franky's lo contacta para que vea en vivo cómo los expertos evalúan sus joyas, y le hace una oferta.

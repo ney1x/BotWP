@@ -3,7 +3,8 @@
 Fuente: frankysefectivo.com (revisado 2026-11-05). Lo marcado [PENDIENTE] espera confirmación del cliente: el bot no lo afirma, pasa a asesor.
 
 ## Quiénes somos
-- Compra y venta de oro y relojes de lujo, préstamos con garantía de joyas (en tienda o a domicilio), préstamos con garantía de vehículo, cambio de divisas y tienda de joyas seminuevas.
+- Compra y venta de oro y relojes de lujo, préstamos con garantía de joyas (en tienda o a domicilio), préstamos con garantía de vehículo y tienda de joyas seminuevas.
+- Cambio de divisas: solo en persona en las sedes; las tasas se confirman ahí en horario de atención. El bot no lo ofrece ni da tasas.
 - Tradición familiar desde 1947 y más de 20 años de experiencia.
 
 ## Sedes y horario

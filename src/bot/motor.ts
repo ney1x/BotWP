@@ -2,7 +2,6 @@ import { DateTime } from 'luxon';
 import type { Almacen, Conversacion, EstadoComercial, Ficha } from '../almacen/tipos.js';
 import { conversacionNueva } from '../almacen/tipos.js';
 import type { Config } from '../config.js';
-import type { FuenteDivisas } from '../datos/divisas.js';
 import { estimarOro, interpretarPeso, tablaOro, type FuenteOro } from '../datos/oro.js';
 import { formatoUsd, PIEZAS_POR_VISTA, type FiltroTienda, type FuenteTienda } from '../datos/tienda.js';
 import { ahoraLegible, describirApertura, diaLocal, estaAbierto, siguienteApertura, type OpcionesHorario } from '../horario.js';
@@ -20,7 +19,6 @@ export interface Dependencias {
   almacen: Almacen;
   oro: FuenteOro;
   tienda: FuenteTienda;
-  divisas: Pick<FuenteDivisas, 'obtener'>;
   ia?: ProveedorIA;
   conocimiento: string;
   reloj?: () => Date;
@@ -55,6 +53,12 @@ const RE_PENSAR =
 /** Pedido de no recibir más mensajes (política de WhatsApp: toda baja se respeta). */
 const RE_NO_ESCRIBIR =
   /^(stop|baja|unsubscribe)$|\bno (me|nos) (vuelva[ns]? a |sigan? )?(escriba|escriban|escribas|escribir|contacte|contacten|contactes|moleste|molesten|molestes)\b|\b(darme de baja|dar de baja|no quiero (recibir )?(mas )?mensajes)\b/;
+/** Preguntas de cambio de divisas (sin "dólares" solo: aparece en preguntas de oro). */
+const RE_DIVISAS =
+  /\b(divisas?|tasas? de cambio|tipo de cambio|casa de cambio|moneda extranjera|euros?|pesos (colombianos|mexicanos|dominicanos|argentinos|chilenos)|bolivares|soles peruanos|reales brasilenos|reais|libras esterlinas|cambi\w* (de )?(dolares|moneda|monedas|billetes))\b/;
+/** Preguntas de envío de joyas por correo. */
+const RE_CORREO =
+  /\b(por correo(?! electronico)|fedex|usps|por paqueteria|correo postal|(enviar|mandar|envio|envia|mando) (mis |las |sus |unas )?(joyas|prendas|piezas|oro|cadenas?|anillos?|relojes|reloj) por)\b/;
 const BOTONES_FUERA_DE_FORMULARIO = new Set<string>([ID.SEG_RETOMAR, ID.SEG_FIN, ID.SEG_NO, ID.ASESOR, ID.MENU]);
 const RE_SEDES_HORARIOS = /\b(sedes?|sucursales?|horarios?|direccion(?:es)?|ubicacion(?:es)?|abren|abierto|abiertos|cierran|donde quedan|como llego)\b/;
 
@@ -283,13 +287,17 @@ export class Motor {
     }
     if (t.length <= 80 && RE_ASESOR.test(t)) return this.pasarAAsesor(conv, 'El cliente pidió hablar con un asesor');
 
+    // En un chat nuevo la bienvenida va dentro del primer mensaje, no aparte (Meta cobra cada mensaje).
+    const saludo = esNueva ? T.bienvenida(conv.nombre) : undefined;
+    // Divisas y envío por correo: respuesta fija, sin IA (política de WhatsApp).
+    if (RE_DIVISAS.test(t)) return anteponer([this.divisasPresencial()], saludo);
+    if (RE_CORREO.test(t)) return anteponer([this.correo()], saludo);
+
     const peso = interpretarPeso(texto);
     if (peso) return this.estimar(peso.gramos, peso.quilates);
 
     if (conv.soloMenuHasta && new Date(conv.soloMenuHasta) > ahora) return [menuPrincipal(T.soloMenu)];
 
-    // En un chat nuevo la bienvenida va dentro del primer mensaje, no aparte (Meta cobra cada mensaje).
-    const saludo = esNueva ? T.bienvenida(conv.nombre) : undefined;
     if (!this.d.ia) return anteponer([menuPrincipal(T.noEntendi)], saludo);
 
     const usosIA = await this.d.almacen.incrementar(conv.telefono, 'ia', diaLocal(ahora, this.horario.zona));
@@ -302,7 +310,7 @@ export class Motor {
     const ahora = this.ahora();
     const acciones: Accion[] = [];
     const ejecutar = crearEjecutor(
-      { oro: () => this.d.oro.obtener(), divisas: () => this.d.divisas.obtener(ahora), tienda: this.d.tienda },
+      { oro: () => this.d.oro.obtener(), tienda: this.d.tienda },
       acciones,
     );
     let r;
@@ -388,12 +396,9 @@ export class Motor {
       }
       case ID.ORO_CALC:
         return [{ clase: 'texto', texto: T.oroPedirPeso }];
-      case ID.DIVISAS: {
-        const dv = await this.d.divisas.obtener(this.ahora());
-        if (dv.estado === 'consultar') return [botonesMenu(T.divisasConsultar, [{ id: ID.ASESOR, titulo: 'Sí, un asesor' }])];
-        const lineas = dv.tasas.map((x) => `• ${x.moneda}: compra $${x.compra} · venta $${x.venta}`).join('\n');
-        return [botonesMenu(T.divisasTasas(lineas, dv.estado === 'referencial'), [{ id: ID.ASESOR, titulo: 'Hablar con asesor' }])];
-      }
+      case ID.DIVISAS:
+        // Botón de menús viejos: el menú actual ya no ofrece divisas.
+        return [this.divisasPresencial()];
       case ID.TIENDA: {
         const cats = await this.d.tienda.categorias();
         if (cats.length === 0) return [{ clase: 'texto', texto: `${T.tiendaVacia}\n${this.d.config.TIENDA_URL}` }];
@@ -418,7 +423,8 @@ export class Motor {
       case ID.DOMICILIO:
         return [{ clase: 'botones', texto: T.domicilio, botones: [{ id: `${PREFIJO.FORMULARIO}domicilio`, titulo: 'Agendar visita' }, { id: ID.ASESOR, titulo: 'Hablar con asesor' }, { id: ID.MENU, titulo: 'Ver menú' }] }];
       case ID.CORREO:
-        return [botonesMenu(T.correo, [{ id: ID.ASESOR, titulo: 'Pedir dirección' }])];
+        // Solo desde botones de menús viejos o si el cliente pregunta: el menú actual no lo ofrece.
+        return [this.correo()];
       case ID.SEDES:
         return [botonesMenu(T.sedes(), [{ id: `${PREFIJO.FORMULARIO}cita_doral`, titulo: 'Cita en Doral' }])];
       case ID.ASESOR:
@@ -458,6 +464,14 @@ export class Motor {
         // Botones de un formulario que ya terminó, o ids viejos.
         return [menuPrincipal()];
     }
+  }
+
+  private divisasPresencial(): Saliente {
+    return botonesMenu(T.divisasPresencial(), [{ id: ID.SEDES, titulo: 'Ver sedes' }]);
+  }
+
+  private correo(): Saliente {
+    return botonesMenu(T.correo, [{ id: ID.ASESOR, titulo: 'Pedir dirección' }]);
   }
 
   private estimar(gramos: number, quilates: number): Promise<Saliente[]> {

@@ -70,7 +70,6 @@ export function menuPrincipal(texto = '¿En qué le puedo ayudar? Elija una opci
         titulo: 'Consultas',
         filas: [
           { id: ID.ORO, titulo: 'Precio del oro', descripcion: 'Precio por gramo y cálculo de su pieza' },
-          { id: ID.DIVISAS, titulo: 'Cambio de divisas', descripcion: 'Tasas referenciales del día' },
           { id: ID.TIENDA, titulo: 'Joyas disponibles', descripcion: 'Anillos, cadenas, relojes y más' },
         ],
       },
@@ -81,7 +80,6 @@ export function menuPrincipal(texto = '¿En qué le puedo ayudar? Elija una opci
           { id: ID.COTIZAR, titulo: 'Cotizar reloj o joya', descripcion: 'Envíe fotos y un asesor le cotiza' },
           { id: ID.VEHICULO, titulo: 'Préstamo con vehículo', descripcion: 'Autos, motos, camiones y botes' },
           { id: ID.DOMICILIO, titulo: 'Préstamo a domicilio', descripcion: 'Evaluación en su casa u oficina' },
-          { id: ID.CORREO, titulo: 'Enviar por correo', descripcion: 'Venda o empeñe desde casa (solo EE.UU.)' },
         ],
       },
       {
@@ -118,11 +116,9 @@ export const T = {
   oroSinQuilate: (quilates: number) =>
     `No tengo un precio publicado para ${quilates}k. Si desea, un asesor puede cotizarle esa pieza.`,
 
-  divisasTasas: (lineas: string, referencial: boolean) =>
-    `*${referencial ? 'Tasas de cambio referenciales publicadas' : 'Tasas de cambio de hoy'}* (USD por unidad)\n${lineas}\n\nSon tasas de referencia y pueden variar durante el día. El cambio se hace únicamente en persona, en nuestras sedes.`,
-
-  divisasConsultar:
-    'Las tasas de cambio varían durante el día, por eso no las tengo publicadas ahora. Si desea, un asesor le indica la tasa de referencia. El cambio se hace únicamente en persona, en nuestras sedes.',
+  /** Divisas: por política de WhatsApp (real currency) no se dan tasas ni se coordinan cambios por el chat. */
+  divisasPresencial: () =>
+    `El cambio de divisas se hace únicamente en persona en nuestras sedes; las tasas se confirman ahí, en horario de atención.\n\nSi tiene dudas, puede llamar a Kendall al *${SEDES.kendall.telefono}*.`,
 
   empeno:
     '*Empeño con garantía de joyas* 💍\nPuede traer su oro o su reloj fino a nuestra sede, aunque la pieza esté rota. La evaluamos frente a usted y le hacemos una oferta sin compromiso. Si la acepta, su joya queda resguardada hasta que la recupere.\n\nNo aceptamos bisutería ni piezas enchapadas. Las condiciones se las explica un asesor según su pieza.' +
@@ -135,7 +131,7 @@ export const T = {
     '*Empeño a domicilio* 🏠\nCon cita previa, un especialista visita su casa u oficina y evalúa sus joyas frente a usted. Le hace una oferta sin compromiso y, si la acepta, sus joyas quedan resguardadas hasta que las recupere.',
 
   correo:
-    '*Venda o empeñe por correo* 📦 (solo EE.UU.)\n1. Ponga sus joyas en doble bolsa con cierre (tipo Ziplock) con una copia de su identificación y selle con cinta.\n2. Envíelas por FedEx o USPS y guarde el número de rastreo. Viajan aseguradas hasta $1.000.\n3. Al recibirlas le contactamos para que vea la evaluación en vivo y le hacemos una oferta sin compromiso.\n\nAntes de enviar nada, hable con un asesor: él le confirma la dirección oficial de envío.',
+    '*Envío de joyas por correo* 📦 (solo EE.UU.)\n1. Ponga sus joyas en doble bolsa con cierre (tipo Ziplock) con una copia de su identificación y selle con cinta.\n2. Envíelas por FedEx o USPS y guarde el número de rastreo. Viajan aseguradas hasta $1.000.\n3. La evaluación y cualquier oferta se hacen al recibir la pieza en la tienda; le contactamos para que vea la evaluación en vivo. La oferta es sin compromiso.\n\nNunca le pediremos pagos por adelantado ni datos de tarjeta o cuenta bancaria. Antes de enviar nada, hable con un asesor: él le confirma la dirección oficial de envío.',
 
   sedes: () =>
     `*Nuestras sedes* 📍\n\n*${SEDES.kendall.nombre}*\n${SEDES.kendall.direccion}\nTel. ${SEDES.kendall.telefono}\n${maps(SEDES.kendall.direccion)}\n\n*${SEDES.doral.nombre}*\n${SEDES.doral.direccion}\n${maps(SEDES.doral.direccion)}\n\n🕘 Lunes a sábado de 9:00 a 18:30. Domingos y feriados cerrado.`,
