@@ -46,7 +46,7 @@ export const HERRAMIENTAS: DefHerramienta[] = [
   {
     nombre: 'iniciar_formulario',
     descripcion:
-      'Inicia la toma de datos para que un asesor atienda: reloj (cotizar reloj o joya con piedras/marca), domicilio (préstamo a domicilio), vehiculo (préstamo con vehículo), cita_doral (cita en sede Doral).',
+      'Inicia la toma de datos para que un asesor atienda: reloj (cotizar reloj o joya con piedras/marca), domicilio (empeño a domicilio), vehiculo (empeño con garantía de vehículo, solo si el cliente lo pidió), cita_doral (cita en sede Doral).',
     esquema: {
       type: 'object',
       properties: { tipo: { type: 'string', enum: Object.keys(FORMULARIOS) } },

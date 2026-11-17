@@ -59,6 +59,9 @@ const RE_DIVISAS =
 /** Preguntas de envío de joyas por correo. */
 const RE_CORREO =
   /\b(por correo(?! electronico)|fedex|usps|por paqueteria|correo postal|(enviar|mandar|envio|envia|mando) (mis |las |sus |unas )?(joyas|prendas|piezas|oro|cadenas?|anillos?|relojes|reloj) por)\b/;
+/** Preguntas por empeño de vehículos: solo se explica si el cliente lo pide (Meta Support, 17-nov-2026). */
+const RE_VEHICULO =
+  /\b(vehiculos?|carros?|autos?|motos?|motocicletas?|camion(es|eta|etas)?|botes?|lanchas?|title loan|titulo (de|del) (mi |su )?(carro|auto|vehiculo|moto))\b/;
 const BOTONES_FUERA_DE_FORMULARIO = new Set<string>([ID.SEG_RETOMAR, ID.SEG_FIN, ID.SEG_NO, ID.ASESOR, ID.MENU]);
 const RE_SEDES_HORARIOS = /\b(sedes?|sucursales?|horarios?|direccion(?:es)?|ubicacion(?:es)?|abren|abierto|abiertos|cierran|donde quedan|como llego)\b/;
 
@@ -292,6 +295,7 @@ export class Motor {
     // Divisas y envío por correo: respuesta fija, sin IA (política de WhatsApp).
     if (RE_DIVISAS.test(t)) return anteponer([this.divisasPresencial()], saludo);
     if (RE_CORREO.test(t)) return anteponer([this.correo()], saludo);
+    if (RE_VEHICULO.test(t)) return anteponer([this.vehiculo()], saludo);
 
     const peso = interpretarPeso(texto);
     if (peso) return this.estimar(peso.gramos, peso.quilates);
@@ -419,7 +423,8 @@ export class Motor {
       case ID.COTIZAR:
         return [this.iniciarFormulario(conv, 'reloj')];
       case ID.VEHICULO:
-        return [{ clase: 'botones', texto: T.vehiculo, botones: [{ id: `${PREFIJO.FORMULARIO}vehiculo`, titulo: 'Dejar mis datos' }, { id: ID.ASESOR, titulo: 'Hablar con asesor' }, { id: ID.MENU, titulo: 'Ver menú' }] }];
+        // Botón de menús viejos: el menú actual ya no ofrece vehículos.
+        return [this.vehiculo()];
       case ID.DOMICILIO:
         return [{ clase: 'botones', texto: T.domicilio, botones: [{ id: `${PREFIJO.FORMULARIO}domicilio`, titulo: 'Agendar visita' }, { id: ID.ASESOR, titulo: 'Hablar con asesor' }, { id: ID.MENU, titulo: 'Ver menú' }] }];
       case ID.CORREO:
@@ -468,6 +473,18 @@ export class Motor {
 
   private divisasPresencial(): Saliente {
     return botonesMenu(T.divisasPresencial(), [{ id: ID.SEDES, titulo: 'Ver sedes' }]);
+  }
+
+  private vehiculo(): Saliente {
+    return {
+      clase: 'botones',
+      texto: T.vehiculo,
+      botones: [
+        { id: `${PREFIJO.FORMULARIO}vehiculo`, titulo: 'Dejar mis datos' },
+        { id: ID.ASESOR, titulo: 'Hablar con asesor' },
+        { id: ID.MENU, titulo: 'Ver menú' },
+      ],
+    };
   }
 
   private correo(): Saliente {

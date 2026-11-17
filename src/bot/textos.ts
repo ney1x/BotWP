@@ -76,10 +76,9 @@ export function menuPrincipal(texto = '¿En qué le puedo ayudar? Elija una opci
       {
         titulo: 'Servicios',
         filas: [
-          { id: ID.EMPENO, titulo: 'Empeño y préstamos', descripcion: 'Con garantía de sus joyas' },
+          { id: ID.EMPENO, titulo: 'Empeño de joyas', descripcion: 'Con garantía de sus joyas' },
           { id: ID.COTIZAR, titulo: 'Cotizar reloj o joya', descripcion: 'Envíe fotos y un asesor le cotiza' },
-          { id: ID.VEHICULO, titulo: 'Préstamo con vehículo', descripcion: 'Autos, motos, camiones y botes' },
-          { id: ID.DOMICILIO, titulo: 'Préstamo a domicilio', descripcion: 'Evaluación en su casa u oficina' },
+          { id: ID.DOMICILIO, titulo: 'Empeño a domicilio', descripcion: 'Evaluación en su casa u oficina' },
         ],
       },
       {
@@ -124,8 +123,9 @@ export const T = {
     '*Empeño con garantía de joyas* 💍\nPuede traer su oro o su reloj fino a nuestra sede, aunque la pieza esté rota. La evaluamos frente a usted y le hacemos una oferta sin compromiso. Si la acepta, su joya queda resguardada hasta que la recupere.\n\nNo aceptamos bisutería ni piezas enchapadas. Las condiciones se las explica un asesor según su pieza.' +
     `\n\nSi tiene otra consulta, con gusto le atendemos en persona en nuestra oficina de *Kendall* (${SEDES.kendall.direccion}).`,
 
+  /** Solo si el cliente pregunta (Meta: no ofrecer el empeño de vehículos por iniciativa propia). */
   vehiculo:
-    '*Préstamo con garantía de vehículo* 🚗\nAceptamos autos, motos, camiones y botes como garantía.\n\nRequisitos: vehículo libre de deuda, título a su nombre e identificación oficial. El vehículo queda resguardado en nuestras instalaciones mientras dure el préstamo. Las condiciones las define un asesor después de evaluar el vehículo.',
+    '*Empeño con garantía de vehículo* 🚗\nAceptamos autos, motos, camiones y botes como garantía.\n\nRequisitos: vehículo libre de deuda, título a su nombre e identificación oficial. El vehículo queda resguardado en nuestras instalaciones mientras dure el empeño. Las condiciones las define un asesor después de evaluar el vehículo.',
 
   domicilio:
     '*Empeño a domicilio* 🏠\nCon cita previa, un especialista visita su casa u oficina y evalúa sus joyas frente a usted. Le hace una oferta sin compromiso y, si la acepta, sus joyas quedan resguardadas hasta que las recupere.',

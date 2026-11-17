@@ -21,6 +21,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - Baja por texto: «no me escriban», «stop», «baja» o «no quiero mensajes» cancelan el formulario y desactivan los seguimientos (la política de WhatsApp exige respetar toda baja).
 
 ### Changed
+- Empeño de vehículos fuera del menú, según Meta Support (17-nov-2026: se puede explicar si el cliente pregunta, pero no ofrecerlo por iniciativa propia). Si el cliente pregunta (carro, moto, vehículo…) o toca un botón viejo, recibe la explicación con *Dejar mis datos*, sin pasar por la IA. El menú dice «Empeño de joyas» y «Empeño a domicilio» en lugar de «préstamos», y la IA usa «empeño con garantía», nunca «préstamos» a secas.
 - Alineado con la guía de Meta Support (16-nov-2026) y la WhatsApp Commerce Policy (`REAL_FAKE_CURRENCY`, `MISLEADING`, `SCAM`):
   - Cambio de divisas fuera del chat: sale del menú, de la bienvenida y de la IA (se quita la herramienta `tasas_divisas`). Si el cliente pregunta, o toca un botón viejo, recibe un texto fijo sin pasar por la IA: el cambio se hace en persona en las sedes y las tasas se confirman ahí. `src/datos/divisas*.ts` y `DIVISAS_CSV_URL` quedan sin uso.
   - Envío de joyas por correo: sale del menú y solo se explica si el cliente lo pregunta (texto fijo). Aclara que la evaluación y cualquier oferta se hacen al recibir la pieza en la tienda y que nunca se piden pagos por adelantado.
