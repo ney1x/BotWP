@@ -22,7 +22,8 @@ Reglas para el bot: nunca dar montos ni porcentajes de préstamo, tasas de inter
 - Para agendar se piden: nombre, dirección, código postal, día y hora preferidos y fotos de las joyas.
 - [PENDIENTE: zonas cubiertas, costo de la visita, monto mínimo, días y horarios de visita]
 
-## Préstamo con garantía de vehículo
+## Empeño con garantía de vehículo
+- Solo se explica si el cliente pregunta por vehículos. El bot nunca lo ofrece por su cuenta (Meta Support, 17-nov-2026).
 - Las condiciones y el monto los define un asesor después de evaluar el vehículo.
 - Vehículos: automóvil, motocicleta, camión o bote.
 - Requisitos: vehículo libre de deuda, título a nombre del solicitante y documento de identidad emitido por el gobierno.

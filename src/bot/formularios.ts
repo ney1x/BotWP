@@ -36,8 +36,8 @@ export const FORMULARIOS: Record<string, DefFormulario> = {
   },
   domicilio: {
     tipo: 'domicilio',
-    tema: 'el préstamo a domicilio',
-    motivo: 'Préstamo a domicilio: solicitud de visita',
+    tema: 'el empeño a domicilio',
+    motivo: 'Empeño a domicilio: solicitud de visita',
     pasos: [
       { campo: 'nombre', etiqueta: 'Nombre', tipo: 'texto', pregunta: 'Para agendar la visita, ¿cuál es su nombre completo?' },
       { campo: 'direccion', etiqueta: 'Dirección', tipo: 'texto', pregunta: '¿En qué dirección le visitamos?' },
@@ -48,8 +48,8 @@ export const FORMULARIOS: Record<string, DefFormulario> = {
   },
   vehiculo: {
     tipo: 'vehiculo',
-    tema: 'el préstamo con garantía de su vehículo',
-    motivo: 'Préstamo con garantía de vehículo',
+    tema: 'el empeño de su vehículo',
+    motivo: 'Empeño con garantía de vehículo',
     pasos: [
       { campo: 'libre_deuda', etiqueta: 'Libre de deuda', tipo: 'si_no', pregunta: '¿El vehículo está libre de deuda (sin financiamiento pendiente)?', siNoCorta: 'El vehículo tiene deuda.' },
       { campo: 'titulo_a_nombre', etiqueta: 'Título a su nombre', tipo: 'si_no', pregunta: '¿El título está a su nombre?', siNoCorta: 'El título no está a su nombre.' },
