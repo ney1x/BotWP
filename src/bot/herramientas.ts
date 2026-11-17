@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import type { LecturaDivisas } from '../datos/divisas.js';
 import { estimarOro, tablaOro, type LecturaOro } from '../datos/oro.js';
 import { formatoUsd, PIEZAS_POR_VISTA, type FiltroTienda, type FuenteTienda } from '../datos/tienda.js';
 import type { DefHerramienta } from './ia.js';
@@ -30,11 +29,6 @@ export const HERRAMIENTAS: DefHerramienta[] = [
       },
       required: ['gramos', 'quilates'],
     },
-  },
-  {
-    nombre: 'tasas_divisas',
-    descripcion: 'Tasas de compra y venta en USD por unidad. Indica si las tasas publicadas son referenciales o si hay que consultar a un asesor.',
-    esquema: { type: 'object', properties: {} },
   },
   {
     nombre: 'buscar_joyas',
@@ -91,7 +85,6 @@ const AsesorIn = z.object({ motivo: z.string().max(300).default('El cliente pidi
 
 export interface FuentesHerramientas {
   oro: () => Promise<LecturaOro>;
-  divisas: () => Promise<LecturaDivisas>;
   tienda: FuenteTienda;
 }
 
@@ -111,12 +104,6 @@ export function crearEjecutor(fuentes: FuentesHerramientas, acciones: Accion[]) 
         return r.ok
           ? `${e.gramos} g de ${e.quilates}k a $${r.precioGramo}/g = ${formatoUsd(r.usd)} (estimado referencial)`
           : `NO_DISPONIBLE: ${r.motivo}`;
-      }
-      case 'tasas_divisas': {
-        const d = await fuentes.divisas();
-        if (d.estado === 'consultar') return 'CONSULTAR: las tasas se confirman con un asesor.';
-        const tasas = d.tasas.map((t) => `${t.moneda}: compra ${t.compra}, venta ${t.venta}`).join('\n');
-        return d.estado === 'referencial' ? `REFERENCIAL: tasas publicadas en USD por unidad, sujetas a cambio.\n${tasas}` : tasas;
       }
       case 'buscar_joyas': {
         const b = BuscarIn.parse(entrada ?? {});

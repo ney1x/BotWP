@@ -67,7 +67,7 @@ export const FORMULARIOS: Record<string, DefFormulario> = {
     pasos: [
       { campo: 'nombre', etiqueta: 'Nombre', tipo: 'texto', pregunta: 'Con gusto le agendamos en Doral. ¿Cuál es su nombre?' },
       { campo: 'dia_hora', etiqueta: 'Día y hora preferidos', tipo: 'texto', pregunta: '¿Qué día y hora prefiere? (lunes a sábado, 9:00 a 18:30)' },
-      { campo: 'motivo', etiqueta: 'Motivo', tipo: 'texto', pregunta: '¿Qué trámite desea hacer? (vender, empeñar, cambio de divisas…)' },
+      { campo: 'motivo', etiqueta: 'Motivo', tipo: 'texto', pregunta: '¿Qué trámite desea hacer? (vender, empeñar, cotizar…)' },
     ],
   },
 };
