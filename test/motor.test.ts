@@ -5,7 +5,6 @@ import type { PeticionIA, ProveedorIA, RespuestaIA } from '../src/bot/ia.js';
 import { Motor } from '../src/bot/motor.js';
 import { ID, SEDES } from '../src/bot/textos.js';
 import { configPorDefecto } from '../src/config.js';
-import { FuenteDivisas } from '../src/datos/divisas.js';
 import { FuenteOro } from '../src/datos/oro.js';
 import { FuenteTienda } from '../src/datos/tienda.js';
 import type { Contenido, ProveedorWhatsApp, Saliente } from '../src/whatsapp/tipos.js';
@@ -72,7 +71,6 @@ function crearMotor(
   ia?: ProveedorIA,
   extra: Record<string, string> = {},
   tienda = new FuenteTienda('http://wc', fetchFalso),
-  divisas: Pick<FuenteDivisas, 'obtener'> = new FuenteDivisas(undefined, { zona, feriados: [] }),
 ) {
   return new Motor({
     config: configPorDefecto({ ASESOR_WHATSAPP: ASESOR, LIMITE_RESPUESTAS_DIA: '5', ...extra }),
@@ -81,7 +79,6 @@ function crearMotor(
     ia,
     oro: new FuenteOro('http://gold', fetchFalso),
     tienda,
-    divisas,
     conocimiento: 'kb',
     reloj: () => ahora,
   });
@@ -119,13 +116,7 @@ describe('modo informativo', () => {
 
   test('el texto, los adjuntos y los botones antiguos no abren flujos ni llaman a Claude', async () => {
     const ia = new IAFalsa(async () => ({ texto: 'Respuesta de IA', costoUsd: 0, rechazo: false }));
-    let consultasDivisas = 0;
-    const motor = crearMotor(ia, { WA_PROVEEDOR: 'ycloud', LIMITE_RESPUESTAS_DIA: '20' }, undefined, {
-      obtener: async () => {
-        consultasDivisas++;
-        return { estado: 'consultar', motivo: 'Fuente de prueba' };
-      },
-    });
+    const motor = crearMotor(ia, { WA_PROVEEDOR: 'ycloud', LIMITE_RESPUESTAS_DIA: '20' });
 
     await texto(motor, '¿Cuánto me dan por cambiar 100 euros?');
     await texto(motor, 'Quiero un préstamo sin garantía');
@@ -138,7 +129,6 @@ describe('modo informativo', () => {
 
     expect(textos()).toHaveLength(12);
     expect(textos().every((t) => t.includes(SEDES.kendall.telefono))).toBe(true);
-    expect(consultasDivisas).toBe(0);
     expect(ia.peticiones).toHaveLength(0);
     expect(almacen.fichas).toHaveLength(0);
     expect((await almacen.obtenerConversacion(TEL))?.fotosSueltas).toBeUndefined();
@@ -187,19 +177,65 @@ describe('motor', () => {
     expect(textos()[1]).toContain('$455');
   });
 
-  test('identifica las tasas de Wix como referenciales en el menú y en la herramienta de la IA', async () => {
-    const ia = new IAFalsa(async (p) => {
-      expect(await p.ejecutar('tasas_divisas', {})).toMatch(/^REFERENCIAL:.*\nEUR: compra 1\.1, venta 1\.18$/);
-      return { texto: 'La tasa de venta publicada es de 1.18 USD por euro. Es referencial.', costoUsd: 0, rechazo: false };
-    });
-    const motor = crearMotor(ia, undefined, undefined, {
-      obtener: async () => ({ estado: 'referencial', tasas: [{ moneda: 'EUR', compra: 1.10, venta: 1.18 }] }),
-    });
-    await opcion(motor, ID.DIVISAS);
-    expect(textos()[0]).toContain('Tasas de cambio referenciales publicadas');
-    expect(textos()[0]).toContain('EUR: compra $1.1 · venta $1.18');
-    await texto(motor, '¿Cuánto me cuesta comprar euros?');
-    expect(textos()[1]).toContain('1.18 USD por euro. Es referencial.');
+  test('el menú principal no ofrece divisas ni envío por correo', async () => {
+    await texto(crearMotor(), 'Hola');
+    const menu = alCliente()[0];
+    const ids = menu?.clase === 'lista' ? menu.secciones.flatMap((s) => s.filas.map((f) => f.id)) : [];
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids).not.toContain(ID.DIVISAS);
+    expect(ids).not.toContain(ID.CORREO);
+    expect(JSON.stringify(menu).toLowerCase()).not.toMatch(/divisa|correo/);
+  });
+
+  test('preguntas de divisas → texto fijo en persona, sin tasas y sin llamar a la IA', async () => {
+    const ia = new IAFalsa(async () => ({ texto: '1 EUR = 1.18 USD', costoUsd: 0, rechazo: false }));
+    const motor = crearMotor(ia, { LIMITE_RESPUESTAS_DIA: '20' });
+    await texto(motor, '¿A cuánto está el cambio de euros?');
+    await texto(motor, 'quiero cambiar dolares a pesos colombianos');
+    await texto(motor, '¿Cuál es la tasa de cambio hoy?');
+    await opcion(motor, ID.DIVISAS); // botón de un menú viejo
+    expect(ia.peticiones).toHaveLength(0);
+    expect(textos()).toHaveLength(4);
+    for (const t of textos()) {
+      expect(t).toContain('únicamente en persona en nuestras sedes');
+      expect(t).not.toMatch(/\d\.\d+|USD/);
+    }
+    expect(textos()[0]).toMatch(/^¡Hola Ana!/);
+  });
+
+  test('"reales" y "soles" sueltos no se toman como divisas; "cambiar dólares" y "tipo de cambio" sí', async () => {
+    const ia = new IAFalsa(async () => ({ texto: 'Respuesta de IA', costoUsd: 0, rechazo: false }));
+    const motor = crearMotor(ia, { LIMITE_RESPUESTAS_DIA: '20' });
+    await texto(motor, '¿Son joyas reales?');
+    await texto(motor, '¿Los diamantes son reales?');
+    await texto(motor, 'Busco unos aretes de soles');
+    expect(ia.peticiones).toHaveLength(3);
+    expect(textos().some((t) => t.includes('únicamente en persona en nuestras sedes'))).toBe(false);
+    await texto(motor, 'quiero cambiar dolares a pesos');
+    await texto(motor, 'tipo de cambio hoy');
+    expect(ia.peticiones).toHaveLength(3);
+    expect(textos().slice(-2).every((t) => t.includes('únicamente en persona en nuestras sedes'))).toBe(true);
+  });
+
+  test('"dólares" en una pregunta de oro no se toma como divisas', async () => {
+    const ia = new IAFalsa(async () => ({ texto: 'Le explico el precio del oro.', costoUsd: 0, rechazo: false }));
+    await texto(crearMotor(ia), '¿Cuántos dólares me dan por una cadena de oro?');
+    expect(ia.peticiones).toHaveLength(1);
+  });
+
+  test('envío por correo: solo si el cliente pregunta, con evaluación al recibir y sin pagos por adelantado', async () => {
+    const ia = new IAFalsa(async () => ({ texto: 'IA', costoUsd: 0, rechazo: false }));
+    const motor = crearMotor(ia, { LIMITE_RESPUESTAS_DIA: '20' });
+    await texto(motor, '¿Puedo enviar mis joyas por correo?');
+    await texto(motor, 'Lo mando por FedEx?');
+    await opcion(motor, ID.CORREO); // botón de un menú viejo
+    expect(ia.peticiones).toHaveLength(0);
+    for (const t of textos()) {
+      expect(t).toContain('La evaluación y cualquier oferta se hacen al recibir la pieza en la tienda');
+      expect(t).toContain('Nunca le pediremos pagos por adelantado');
+    }
+    await texto(motor, 'Me manda la información por correo electrónico?');
+    expect(ia.peticiones).toHaveLength(1);
   });
 
   test('webhook repetido no responde dos veces', async () => {
@@ -505,6 +541,27 @@ describe('evaluación: aviso al asesor, fotos, "lo pienso" y CRM', () => {
     await opcion(motor, ID.SEG_RETOMAR);
     expect(textos().at(-1)).toContain('marca, el modelo');
     expect((await almacen.obtenerConversacion(TEL))?.seguimiento?.estado).not.toBe('programado');
+  });
+
+  test('"no me escriban más" por texto cancela el formulario y bloquea futuros seguimientos', async () => {
+    const motor = crearMotor(undefined, { LIMITE_RESPUESTAS_DIA: '20' });
+    await opcion(motor, ID.COTIZAR);
+    await texto(motor, 'No me escriban más, por favor');
+    const conv = await almacen.obtenerConversacion(TEL);
+    expect(conv?.formulario).toBeUndefined();
+    expect(conv?.sinSeguimiento).toBe(true);
+    expect(textos().at(-1)).toContain('no le volveremos a escribir');
+    await texto(motor, 'lo voy a pensar');
+    expect((await almacen.obtenerConversacion(TEL))?.seguimiento?.estado).not.toBe('programado');
+  });
+
+  test('los textos fijos no prometen dinero rápido, crédito ni porcentajes', async () => {
+    const motor = crearMotor(undefined, { LIMITE_RESPUESTAS_DIA: '20' });
+    for (const id of [ID.EMPENO, ID.VEHICULO, ID.DOMICILIO, ID.CORREO, ID.MENU]) await opcion(motor, id);
+    const todo = JSON.stringify(alCliente()).toLowerCase();
+    for (const frase of ['al instante', 'en el momento', 'crédito', '50 %', 'aprobaci', 'garantizado']) {
+      expect(todo).not.toContain(frase);
+    }
   });
 
   test('sin horario de atención dentro de la ventana no se programa nada (sábado de noche)', async () => {
