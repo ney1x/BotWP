@@ -70,17 +70,17 @@ export function menuPrincipal(texto = '¿En qué le puedo ayudar? Elija una opci
         titulo: 'Consultas',
         filas: [
           { id: ID.ORO, titulo: 'Precio del oro', descripcion: 'Precio por gramo y cálculo de su pieza' },
-          { id: ID.DIVISAS, titulo: 'Cambio de divisas', descripcion: 'Tasas de compra y venta' },
+          { id: ID.DIVISAS, titulo: 'Cambio de divisas', descripcion: 'Tasas referenciales del día' },
           { id: ID.TIENDA, titulo: 'Joyas disponibles', descripcion: 'Anillos, cadenas, relojes y más' },
         ],
       },
       {
         titulo: 'Servicios',
         filas: [
-          { id: ID.EMPENO, titulo: 'Empeño y préstamos', descripcion: 'Préstamo con garantía de sus joyas' },
+          { id: ID.EMPENO, titulo: 'Empeño y préstamos', descripcion: 'Con garantía de sus joyas' },
           { id: ID.COTIZAR, titulo: 'Cotizar reloj o joya', descripcion: 'Envíe fotos y un asesor le cotiza' },
-          { id: ID.VEHICULO, titulo: 'Préstamo con vehículo', descripcion: 'Hasta 50 % del valor, sin revisar crédito' },
-          { id: ID.DOMICILIO, titulo: 'Préstamo a domicilio', descripcion: 'Vamos a su casa u oficina' },
+          { id: ID.VEHICULO, titulo: 'Préstamo con vehículo', descripcion: 'Autos, motos, camiones y botes' },
+          { id: ID.DOMICILIO, titulo: 'Préstamo a domicilio', descripcion: 'Evaluación en su casa u oficina' },
           { id: ID.CORREO, titulo: 'Enviar por correo', descripcion: 'Venda o empeñe desde casa (solo EE.UU.)' },
         ],
       },
@@ -96,7 +96,7 @@ export function menuPrincipal(texto = '¿En qué le puedo ayudar? Elija una opci
 }
 
 const bienvenida = (nombre?: string): string =>
-  `¡Hola${nombre ? ` ${nombre}` : ''}! 👋 Soy el asistente virtual de *Franky's Efectivo*. Le ayudo con el precio del oro, empeño, préstamos, divisas y nuestras joyas disponibles.`;
+  `¡Hola${nombre ? ` ${nombre}` : ''}! 👋 Soy el asistente virtual de *Franky's Efectivo*. Puedo darle información sobre el precio del oro, empeño, joyas disponibles y nuestras sedes.`;
 
 export const T = {
   bienvenida,
@@ -105,10 +105,10 @@ export const T = {
     `${bienvenida(nombre)}\n\n¿En qué le puedo ayudar? Elija una opción o escríbame su pregunta.`,
 
   oroNoDisponible:
-    'En este momento no puedo confirmar el precio del oro. Un asesor se lo da enseguida.',
+    'En este momento no puedo consultar el precio del oro. Si desea, un asesor se lo confirma.',
 
   oroTabla: (tabla: string) =>
-    `*Precio de compra de oro hoy* (USD por gramo):\n${tabla}\n\nEs un precio referencial; la oferta final se da al evaluar la pieza. ¿Quiere calcular su pieza?`,
+    `*Precio de compra de oro hoy* (USD por gramo):\n${tabla}\n\nEs un precio de referencia; la oferta final depende de la evaluación de la pieza. Si quiere, le ayudo a calcular un estimado.`,
 
   oroPedirPeso: 'Escríbame el peso y los quilates, por ejemplo: *5 g de 18k*.',
 
@@ -116,26 +116,26 @@ export const T = {
     `${gramos} g de ${quilates}k × $${precio}/g = *${usd}* aproximadamente.\n\nEs un estimado referencial: la oferta final se da al evaluar la pieza en tienda (peso real y pureza).`,
 
   oroSinQuilate: (quilates: number) =>
-    `No tengo precio publicado para ${quilates}k. Un asesor puede cotizarle esa pieza.`,
+    `No tengo un precio publicado para ${quilates}k. Si desea, un asesor puede cotizarle esa pieza.`,
 
   divisasTasas: (lineas: string, referencial: boolean) =>
-    `*${referencial ? 'Tasas de cambio referenciales publicadas' : 'Tasas de cambio de hoy'}* (USD por unidad)\n${lineas}\n\nLas tasas pueden variar. ¿Desea que un asesor le confirme la operación?`,
+    `*${referencial ? 'Tasas de cambio referenciales publicadas' : 'Tasas de cambio de hoy'}* (USD por unidad)\n${lineas}\n\nSon tasas de referencia y pueden variar durante el día. El cambio se hace únicamente en persona, en nuestras sedes.`,
 
   divisasConsultar:
-    'Las tasas de cambio se confirman en el momento con un asesor, porque varían durante el día. ¿Desea que le escriba uno?',
+    'Las tasas de cambio varían durante el día, por eso no las tengo publicadas ahora. Si desea, un asesor le indica la tasa de referencia. El cambio se hace únicamente en persona, en nuestras sedes.',
 
   empeno:
-    '*Préstamo con garantía de joyas* 💍\nTraiga su oro o su reloj (Rolex, Cartier), también piezas rotas. Lo evaluamos frente a usted y, si acepta la oferta, recibe el dinero al instante. Su joya queda resguardada hasta que pague el préstamo.\n\nNo aceptamos bisutería ni enchapados. El monto, el interés y el plazo se los da un asesor según su pieza.' +
-    `\n\nSi no tiene una joya o un vehículo para dejar en garantía, puede consultar en persona en nuestra oficina de *Kendall* (${SEDES.kendall.direccion}).`,
+    '*Empeño con garantía de joyas* 💍\nPuede traer su oro o su reloj fino a nuestra sede, aunque la pieza esté rota. La evaluamos frente a usted y le hacemos una oferta sin compromiso. Si la acepta, su joya queda resguardada hasta que la recupere.\n\nNo aceptamos bisutería ni piezas enchapadas. Las condiciones se las explica un asesor según su pieza.' +
+    `\n\nSi tiene otra consulta, con gusto le atendemos en persona en nuestra oficina de *Kendall* (${SEDES.kendall.direccion}).`,
 
   vehiculo:
-    '*Préstamo con garantía de vehículo* 🚗\nHasta el 50 % del valor comercial, sin revisar su crédito. Aceptamos autos, motos, camiones y botes.\n\nRequisitos: vehículo libre de deuda, título a su nombre e identificación oficial. El vehículo queda resguardado en nuestras instalaciones durante el préstamo.',
+    '*Préstamo con garantía de vehículo* 🚗\nAceptamos autos, motos, camiones y botes como garantía.\n\nRequisitos: vehículo libre de deuda, título a su nombre e identificación oficial. El vehículo queda resguardado en nuestras instalaciones mientras dure el préstamo. Las condiciones las define un asesor después de evaluar el vehículo.',
 
   domicilio:
-    '*Préstamo a domicilio* 🏠\nUn especialista va a su casa u oficina, evalúa sus joyas frente a usted y, si acepta la oferta, le entrega el dinero en el momento. Sus joyas quedan resguardadas hasta que las recupere.',
+    '*Empeño a domicilio* 🏠\nCon cita previa, un especialista visita su casa u oficina y evalúa sus joyas frente a usted. Le hace una oferta sin compromiso y, si la acepta, sus joyas quedan resguardadas hasta que las recupere.',
 
   correo:
-    '*Venda o empeñe por correo* 📦 (solo EE.UU.)\n1. Ponga sus joyas en doble bolsa con cierre (tipo Ziplock) con una copia de su identificación y selle con cinta.\n2. Envíelas por FedEx o USPS y guarde el número de rastreo. Viajan aseguradas hasta $1.000.\n3. Al recibirlas le contactamos para que vea la evaluación en vivo y le hacemos una oferta. Le pagamos por transferencia, PayPal, cheque o en efectivo.\n\nUn asesor le da la dirección de envío.',
+    '*Venda o empeñe por correo* 📦 (solo EE.UU.)\n1. Ponga sus joyas en doble bolsa con cierre (tipo Ziplock) con una copia de su identificación y selle con cinta.\n2. Envíelas por FedEx o USPS y guarde el número de rastreo. Viajan aseguradas hasta $1.000.\n3. Al recibirlas le contactamos para que vea la evaluación en vivo y le hacemos una oferta sin compromiso.\n\nAntes de enviar nada, hable con un asesor: él le confirma la dirección oficial de envío.',
 
   sedes: () =>
     `*Nuestras sedes* 📍\n\n*${SEDES.kendall.nombre}*\n${SEDES.kendall.direccion}\nTel. ${SEDES.kendall.telefono}\n${maps(SEDES.kendall.direccion)}\n\n*${SEDES.doral.nombre}*\n${SEDES.doral.direccion}\n${maps(SEDES.doral.direccion)}\n\n🕘 Lunes a sábado de 9:00 a 18:30. Domingos y feriados cerrado.`,
@@ -144,34 +144,34 @@ export const T = {
   tiendaVacia: 'No encontré piezas disponibles con ese criterio. Puede ver todas en nuestra tienda en línea:',
   tiendaInteres: '¿Le interesa alguna de estas piezas?',
 
-  asesorAbierto: 'Listo ✅ Un asesor le escribirá por este mismo chat en breve.',
+  asesorAbierto: 'Listo ✅ Un asesor le escribirá por este mismo chat lo antes posible.',
   asesorCerrado: (cuando: string) =>
-    `Ahora estamos cerrados. Abrimos ${cuando} y un asesor le escribirá apenas abramos. Mientras tanto, puedo ayudarle con lo que necesite.`,
-  asesorYaPedido: 'Ya avisé a un asesor; le escribirá por este chat. Mientras tanto, ¿le ayudo con algo más?',
+    `En este momento estamos cerrados. Abrimos ${cuando} y un asesor le escribirá en cuanto abramos. Mientras tanto, con gusto le ayudo con lo que necesite.`,
+  asesorYaPedido: 'Ya avisé a un asesor y le escribirá por este chat. Mientras tanto, ¿le ayudo con algo más?',
   asesorFallo:
-    `No pude avisar a un asesor en este momento 🙏 Toque *Reintentar* en unos minutos o llame a Kendall al *${SEDES.kendall.telefono}*.`,
+    `No pude avisar a un asesor en este momento, disculpe 🙏 Puede tocar *Reintentar* en unos minutos o llamar a Kendall al *${SEDES.kendall.telefono}*.`,
 
-  audio: 'Por ahora no puedo escuchar audios 🙏 Escríbame su consulta o, si prefiere, le paso con un asesor.',
+  audio: 'Disculpe, por ahora no puedo escuchar audios 🙏 ¿Me escribe su consulta? Si prefiere, le paso con un asesor.',
   fotoSuelta:
-    'Recibí su foto 📷 Trabajamos con oro, joyas y relojes. Si es una de esas piezas, toque *Cotizar pieza* y le pido unos datos. Si es otra cosa, un asesor la revisa.',
+    'Gracias por su foto 📷 Trabajamos con oro, joyas y relojes. Si es una de esas piezas, toque *Cotizar pieza* y le pido unos datos. Si es otra cosa, un asesor la revisa.',
   fotoOtra: 'Le paso la foto a un asesor para que la revise.',
-  otroTipo: 'Recibí su mensaje, pero solo puedo leer texto y fotos.',
-  noEntendi: 'No estoy seguro de haberle entendido. Elija una opción del menú o escriba su pregunta de otra forma.',
-  errorTecnico: 'Tuve un problema técnico al responder. Por favor elija una opción del menú o pida hablar con un asesor.',
+  otroTipo: 'Gracias por su mensaje. Por ahora solo puedo leer texto y fotos.',
+  noEntendi: 'Disculpe, no estoy seguro de haberle entendido. Puede elegir una opción del menú o escribirme su pregunta de otra forma.',
+  errorTecnico: 'Disculpe, tuve un problema técnico al responder. Puede elegir una opción del menú o pedir hablar con un asesor.',
 
   pensarlo: 'Claro, sin apuro 🙂 Cuando quiera retomarlo, escríbame aquí.',
-  pensarloAgendado: (cuando: string) => `Claro, sin apuro 🙂 Le escribo ${cuando} por si desea retomarlo.`,
-  sinSeguimiento: 'Entendido, no le escribiremos. Cuando quiera retomarlo, escríbame aquí.',
+  pensarloAgendado: (cuando: string) => `Claro, sin apuro 🙂 Le escribo ${cuando} por si desea retomarlo. Si prefiere que no le escriba, toque *No me escriba*.`,
+  sinSeguimiento: 'Entendido, no le volveremos a escribir. Cuando quiera retomarlo, escríbame aquí.',
   seguimientoPensarlo: (tema: string, nombre?: string) =>
-    `Hola${nombre ? ` ${nombre}` : ''} 👋 Le escribo, como le comenté, sobre ${tema}. ¿Desea retomarlo?`,
+    `Hola${nombre ? ` ${nombre}` : ''} 👋 Como quedamos, le escribo sobre ${tema}. Si desea retomarlo, aquí estoy; si no, toque *No, gracias* y no le volveremos a escribir.`,
   seguimientoFormulario: (tema: string, nombre?: string) =>
-    `Hola${nombre ? ` ${nombre}` : ''} 👋 Quedó pendiente ${tema}. ¿Desea continuar donde lo dejó?`,
+    `Hola${nombre ? ` ${nombre}` : ''} 👋 Quedó pendiente ${tema}. Si desea, seguimos donde lo dejó; si ya no le interesa, toque *No, gracias* y no le volveremos a escribir.`,
   retomar: 'Perfecto, seguimos donde lo dejamos.',
-  noInteresado: 'Entendido, gracias por avisarnos. Aquí estamos cuando nos necesite.',
+  noInteresado: 'Entendido, gracias por avisarnos. No le volveremos a escribir; aquí estamos cuando nos necesite.',
 
   limiteRespuestas:
-    'Hemos llegado al límite de respuestas automáticas por hoy. Si necesita ayuda, un asesor puede atenderle por este chat.',
-  soloMenu: 'Por ahora solo puedo ayudarle con las opciones del menú.',
+    `Por hoy llegamos al límite de respuestas automáticas. Si necesita ayuda, un asesor puede atenderle por este chat o puede llamar a Kendall al *${SEDES.kendall.telefono}*.`,
+  soloMenu: 'Por ahora le puedo ayudar con las opciones del menú.',
   pasaASoloMenu:
-    'Solo puedo ayudarle con temas de Franky\'s Efectivo: oro, empeño, préstamos, divisas y joyas. Por hoy le muestro solo el menú.',
+    'Disculpe, solo puedo ayudarle con temas de Franky\'s Efectivo: oro, empeño, joyas y nuestras sedes. Por hoy le muestro solo el menú.',
 } as const;

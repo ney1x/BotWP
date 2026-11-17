@@ -24,5 +24,5 @@ Fuente: frankysefectivo.com (revisado 2026-11-05). Lo marcado [PENDIENTE] espera
 - Piezas con piedras, relojes y joyas de marca se cotizan con un asesor.
 
 ## Vender o empeñar
-- Franky's recomienda el préstamo antes que la venta: el cliente conserva su joya y puede volver a pedir otro préstamo cuando lo necesite ("tener una joya es como tener una línea de crédito siempre abierta").
+- Con el empeño el cliente conserva la propiedad de su joya y puede recuperarla.
 - Si toma un préstamo y luego decide vender, también se le ayuda.

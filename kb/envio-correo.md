@@ -7,8 +7,8 @@
 - No hace falta kit de envío, ni limpiar, arreglar o pesar las joyas.
 - Puede enviar piezas rotas: oro, brillantes y relojes finos aunque no funcionen.
 - El paquete viaja asegurado hasta $1.000. Si vale más, avise antes para arreglar un seguro especial.
-- La oferta llega por email o teléfono; el cliente tiene 24 horas para aceptarla. [PENDIENTE: confirmar si sigue la aceptación automática a las 24 h]
+- La oferta llega por email o teléfono. [PENDIENTE: plazo para aceptarla]
 - Formas de pago: transferencia bancaria, PayPal, cheque o efectivo en oficina.
 - Si le pagan con cheque y no está conforme, tiene 10 días para devolverlo sin cobrar y le reenvían sus joyas. [PENDIENTE: confirmar vigencia]
 - Franky's cumple la Patriot Act: algunas transacciones pueden requerir reportes federales y datos adicionales.
-- [PENDIENTE: dirección postal exacta de envío] Mientras no esté confirmada, el bot pide al cliente hablar con un asesor para recibir la dirección.
+- [PENDIENTE: dirección postal exacta de envío] El bot nunca da una dirección de envío: el cliente debe hablar con un asesor antes de enviar nada.

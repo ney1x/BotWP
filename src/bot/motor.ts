@@ -52,6 +52,9 @@ const RE_ASESOR =
 const RE_CODIGO_BOT = /#bot\b/i;
 const RE_PENSAR =
   /\b(lo (voy a )?(pienso|pensar|pensare|consulto|consultar)|(dejame|dejeme|deja|deje) (pensar|pensarlo|ver|verlo|consultarlo)|voy a pensarlo|tengo que pensarlo|(despues|luego|mas tarde) (le|te) (escribo|aviso|confirmo)|ahorita no|i'?ll think|let me think)\b/;
+/** Pedido de no recibir más mensajes (política de WhatsApp: toda baja se respeta). */
+const RE_NO_ESCRIBIR =
+  /^(stop|baja|unsubscribe)$|\bno (me|nos) (vuelva[ns]? a |sigan? )?(escriba|escriban|escribas|escribir|contacte|contacten|contactes|moleste|molesten|molestes)\b|\b(darme de baja|dar de baja|no quiero (recibir )?(mas )?mensajes)\b/;
 const BOTONES_FUERA_DE_FORMULARIO = new Set<string>([ID.SEG_RETOMAR, ID.SEG_FIN, ID.SEG_NO, ID.ASESOR, ID.MENU]);
 const RE_SEDES_HORARIOS = /\b(sedes?|sucursales?|horarios?|direccion(?:es)?|ubicacion(?:es)?|abren|abierto|abiertos|cierran|donde quedan|como llego)\b/;
 
@@ -203,6 +206,13 @@ export class Motor {
 
     if (c.clase === 'audio') {
       return [{ clase: 'botones', texto: T.audio, botones: [{ id: ID.ASESOR, titulo: 'Hablar con asesor' }, { id: ID.MENU, titulo: 'Ver menú' }] }];
+    }
+
+    // "No me escriban": se respeta antes que cualquier otro flujo.
+    if (c.clase === 'texto' && c.texto.length <= 80 && RE_NO_ESCRIBIR.test(norm(c.texto))) {
+      conv.formulario = undefined;
+      conv.formularioPausado = undefined;
+      return this.opcion(conv, ID.SEG_NO);
     }
 
     // "Déjame lo pienso": no se guarda como respuesta; se ofrece un único seguimiento.
@@ -404,7 +414,7 @@ export class Motor {
       case ID.COTIZAR:
         return [this.iniciarFormulario(conv, 'reloj')];
       case ID.VEHICULO:
-        return [{ clase: 'botones', texto: T.vehiculo, botones: [{ id: `${PREFIJO.FORMULARIO}vehiculo`, titulo: 'Aplicar' }, { id: ID.ASESOR, titulo: 'Hablar con asesor' }, { id: ID.MENU, titulo: 'Ver menú' }] }];
+        return [{ clase: 'botones', texto: T.vehiculo, botones: [{ id: `${PREFIJO.FORMULARIO}vehiculo`, titulo: 'Dejar mis datos' }, { id: ID.ASESOR, titulo: 'Hablar con asesor' }, { id: ID.MENU, titulo: 'Ver menú' }] }];
       case ID.DOMICILIO:
         return [{ clase: 'botones', texto: T.domicilio, botones: [{ id: `${PREFIJO.FORMULARIO}domicilio`, titulo: 'Agendar visita' }, { id: ID.ASESOR, titulo: 'Hablar con asesor' }, { id: ID.MENU, titulo: 'Ver menú' }] }];
       case ID.CORREO:

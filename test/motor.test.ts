@@ -507,6 +507,27 @@ describe('evaluación: aviso al asesor, fotos, "lo pienso" y CRM', () => {
     expect((await almacen.obtenerConversacion(TEL))?.seguimiento?.estado).not.toBe('programado');
   });
 
+  test('"no me escriban más" por texto cancela el formulario y bloquea futuros seguimientos', async () => {
+    const motor = crearMotor(undefined, { LIMITE_RESPUESTAS_DIA: '20' });
+    await opcion(motor, ID.COTIZAR);
+    await texto(motor, 'No me escriban más, por favor');
+    const conv = await almacen.obtenerConversacion(TEL);
+    expect(conv?.formulario).toBeUndefined();
+    expect(conv?.sinSeguimiento).toBe(true);
+    expect(textos().at(-1)).toContain('no le volveremos a escribir');
+    await texto(motor, 'lo voy a pensar');
+    expect((await almacen.obtenerConversacion(TEL))?.seguimiento?.estado).not.toBe('programado');
+  });
+
+  test('los textos fijos no prometen dinero rápido, crédito ni porcentajes', async () => {
+    const motor = crearMotor(undefined, { LIMITE_RESPUESTAS_DIA: '20' });
+    for (const id of [ID.EMPENO, ID.VEHICULO, ID.DOMICILIO, ID.CORREO, ID.MENU]) await opcion(motor, id);
+    const todo = JSON.stringify(alCliente()).toLowerCase();
+    for (const frase of ['al instante', 'en el momento', 'crédito', '50 %', 'aprobaci', 'garantizado']) {
+      expect(todo).not.toContain(frase);
+    }
+  });
+
   test('sin horario de atención dentro de la ventana no se programa nada (sábado de noche)', async () => {
     ahora = DateTime.fromISO('2026-11-07T20:00', { zone: zona }).toJSDate(); // sábado; domingo cerrado
     const motor = crearMotor();
