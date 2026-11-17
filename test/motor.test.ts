@@ -203,6 +203,30 @@ describe('motor', () => {
     expect(textos()[0]).toMatch(/^¡Hola Ana!/);
   });
 
+  test('el menú no ofrece el empeño de vehículos ni dice "préstamo"', async () => {
+    await texto(crearMotor(), 'Hola');
+    const menu = alCliente()[0];
+    const filas = menu?.clase === 'lista' ? menu.secciones.flatMap((s) => s.filas) : [];
+    expect(filas.map((f) => f.id)).not.toContain(ID.VEHICULO);
+    expect(filas.map((f) => f.titulo)).toEqual(expect.arrayContaining(['Empeño de joyas', 'Empeño a domicilio']));
+    expect(JSON.stringify(menu).toLowerCase()).not.toMatch(/préstamo|vehícul/);
+  });
+
+  test('empeño de vehículo: solo si el cliente pregunta, con texto fijo y sin IA', async () => {
+    const ia = new IAFalsa(async () => ({ texto: 'IA', costoUsd: 0, rechazo: false }));
+    const motor = crearMotor(ia, { LIMITE_RESPUESTAS_DIA: '20' });
+    await texto(motor, '¿Puedo empeñar mi carro?');
+    await texto(motor, 'Aceptan motos?');
+    await opcion(motor, ID.VEHICULO); // botón de un menú viejo
+    expect(ia.peticiones).toHaveLength(0);
+    for (const m of alCliente()) {
+      expect(m).toMatchObject({ clase: 'botones', botones: [{ id: 'FORM:vehiculo' }, { id: ID.ASESOR }, { id: ID.MENU }] });
+    }
+    expect(textos().every((t) => t.includes('Empeño con garantía de vehículo'))).toBe(true);
+    await texto(motor, 'Tienen relojes automáticos?');
+    expect(ia.peticiones).toHaveLength(1);
+  });
+
   test('"reales" y "soles" sueltos no se toman como divisas; "cambiar dólares" y "tipo de cambio" sí', async () => {
     const ia = new IAFalsa(async () => ({ texto: 'Respuesta de IA', costoUsd: 0, rechazo: false }));
     const motor = crearMotor(ia, { LIMITE_RESPUESTAS_DIA: '20' });
