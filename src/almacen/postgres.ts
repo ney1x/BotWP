@@ -96,6 +96,11 @@ export class AlmacenPostgres implements Almacen {
     return r.rows[0]!.id;
   }
 
+  async actualizarFicha(id: string, cambios: Partial<Ficha>) {
+    const { id: _id, ...resto } = cambios;
+    await this.pool.query('UPDATE fichas SET datos = datos || $2::jsonb WHERE id = $1', [id, JSON.stringify(resto)]);
+  }
+
   async sumarGasto(dia: string, usd: number) {
     const r = await this.pool.query<{ usd: string }>(
       `INSERT INTO gastos (dia, usd) VALUES ($1, $2)
@@ -125,6 +130,16 @@ export class AlmacenPostgres implements Almacen {
       fichas: fichas.rows.map((f) => ({ tipo: f.tipo, fueraDeHorario: f.fuera ?? false, creada: f.creada })),
       gastosIA: gastos.rows.map((g) => ({ dia: g.dia, usd: Number(g.usd) })),
     };
+  }
+
+  async seguimientosVencidos(hasta: Date) {
+    const r = await this.pool.query<{ telefono: string }>(
+      `SELECT telefono FROM conversaciones
+       WHERE datos->'seguimiento'->>'estado' = 'programado'
+         AND (datos->'seguimiento'->>'cuando')::timestamptz <= $1`,
+      [hasta],
+    );
+    return r.rows.map((x) => x.telefono);
   }
 
   /** Retención: borra mensajes, conversaciones inactivas, fichas y contadores viejos. */

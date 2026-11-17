@@ -33,6 +33,64 @@ export class CloudApi implements ProveedorWhatsApp {
       throw new Error(`Cloud API ${res.status}: ${detalle.slice(0, 500)}`);
     }
   }
+
+  async reenviarImagen(para: string, ref: string, caption?: string): Promise<void> {
+    const auth = { authorization: `Bearer ${this.o.token}` };
+    const graph = `https://graph.facebook.com/${this.o.graphVersion}`;
+    // En Cloud API la foto llega solo con su media id; un enlace nunca se acepta (podría llevarse el token).
+    if (/^[a-z]+:/i.test(ref) || !/^[\w.-]+$/.test(ref)) throw new Error('Cloud API: referencia de media inválida');
+    const info = await this.f(`${graph}/${ref}`, { headers: auth });
+    if (!info.ok) throw new Error(`Cloud API media ${info.status}`);
+    const url = String(((await info.json()) as { url?: string }).url ?? '');
+    if (!url) throw new Error('Cloud API media: sin url');
+    const archivo = await descargarMedia(this.f, url, auth, HOSTS_MEDIA_META);
+    const form = new FormData();
+    form.append('messaging_product', 'whatsapp');
+    form.append('type', archivo.type || 'image/jpeg');
+    form.append('file', archivo, 'foto');
+    const sub = await this.f(`${graph}/${this.o.phoneNumberId}/media`, { method: 'POST', headers: auth, body: form });
+    if (!sub.ok) throw new Error(`Cloud API subida ${sub.status}: ${(await sub.text().catch(() => '')).slice(0, 300)}`);
+    const { id } = (await sub.json()) as { id?: string };
+    if (!id) throw new Error('Cloud API subida: sin id');
+    await this.enviar(para, { clase: 'imagen', mediaId: id, caption });
+  }
+}
+
+/** Dominios donde Meta sirve la media (la URL que devuelve Graph). */
+export const HOSTS_MEDIA_META = (host: string) => /(^|\.)(fbsbx\.com|facebook\.com|fbcdn\.net|whatsapp\.net)$/.test(host);
+
+/**
+ * Descarga media con las credenciales del proveedor, solo desde HTTPS y dominios permitidos.
+ * Las redirecciones no se siguen con credenciales: se sigue una sola, sin cabeceras, y solo a HTTPS.
+ */
+export async function descargarMedia(
+  f: Fetch,
+  url: string,
+  headers: Record<string, string>,
+  hostPermitido: (host: string) => boolean,
+): Promise<Blob> {
+  const destino = urlSegura(url);
+  if (!hostPermitido(destino.hostname)) throw new Error(`descarga de media: dominio no permitido (${destino.hostname})`);
+  let res = await f(destino.href, { headers, redirect: 'manual' });
+  if (res.status >= 300 && res.status < 400) {
+    const siguiente = res.headers.get('location');
+    if (!siguiente) throw new Error(`descarga de media ${res.status} sin destino`);
+    res = await f(urlSegura(new URL(siguiente, destino).href).href, { redirect: 'error' });
+  }
+  if (!res.ok) throw new Error(`descarga de media ${res.status}`);
+  const tipo = res.headers.get('content-type') ?? 'image/jpeg';
+  return new Blob([await res.arrayBuffer()], { type: tipo });
+}
+
+function urlSegura(url: string): URL {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    throw new Error('descarga de media: URL inválida');
+  }
+  if (u.protocol !== 'https:' || u.username || u.password) throw new Error('descarga de media: solo HTTPS sin credenciales en la URL');
+  return u;
 }
 
 export function cuerpoCloud(para: string, m: Saliente): Record<string, unknown> {
@@ -41,7 +99,11 @@ export function cuerpoCloud(para: string, m: Saliente): Record<string, unknown> 
     case 'texto':
       return { ...base, type: 'text', text: { body: recortar(m.texto, 4096), preview_url: true } };
     case 'imagen':
-      return { ...base, type: 'image', image: { link: m.url, caption: m.caption ? recortar(m.caption, 1024) : undefined } };
+      return {
+        ...base,
+        type: 'image',
+        image: { ...(m.mediaId ? { id: m.mediaId } : { link: m.url }), caption: m.caption ? recortar(m.caption, 1024) : undefined },
+      };
     case 'botones':
       return {
         ...base,
@@ -107,7 +169,12 @@ export function contenidoDe(m: Json): Contenido {
     case 'button': // respuesta rápida de plantilla
       return { clase: 'opcion', id: String(m.button?.payload ?? ''), titulo: String(m.button?.text ?? '') };
     case 'image':
-      return { clase: 'imagen', mediaId: String(m.image?.id ?? ''), caption: m.image?.caption };
+      return {
+        clase: 'imagen',
+        mediaId: String(m.image?.id ?? ''),
+        ...(m.image?.link ? { url: String(m.image.link) } : {}),
+        caption: m.image?.caption,
+      };
     case 'audio':
       return { clase: 'audio' };
     default:

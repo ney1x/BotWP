@@ -17,7 +17,9 @@ function exigir(claves: (keyof Config)[]) {
 function crearWhatsApp(): ProveedorWhatsApp {
   if (config.WA_PROVEEDOR === 'ycloud') {
     exigir(['YCLOUD_API_KEY', 'YCLOUD_NUMERO']);
-    if (!config.YCLOUD_WEBHOOK_SECRET) log.warn('sin YCLOUD_WEBHOOK_SECRET: no se verifica la firma del webhook (solo aceptable en pruebas)');
+    // Con el flujo completo se descargan fotos con la API key: el webhook tiene que venir firmado.
+    if (!config.MODO_INFORMATIVO) exigir(['YCLOUD_WEBHOOK_SECRET']);
+    else if (!config.YCLOUD_WEBHOOK_SECRET) log.warn('sin YCLOUD_WEBHOOK_SECRET: no se verifica la firma del webhook (solo aceptable en pruebas)');
     return new YCloudApi({ apiKey: config.YCLOUD_API_KEY!, numero: config.YCLOUD_NUMERO! });
   }
   exigir(['WA_TOKEN', 'WA_PHONE_NUMBER_ID', 'WA_VERIFY_TOKEN']);
@@ -36,6 +38,12 @@ const purgar = () =>
     .catch((e) => log.error('purga falló', { error: errorATexto(e) }));
 void purgar();
 setInterval(purgar, 24 * 60 * 60 * 1000).unref();
+
+// Seguimientos aceptados por el cliente ("déjame lo pienso"): se revisan cada 5 minutos.
+setInterval(
+  () => void motor.enviarSeguimientos().catch((e) => log.error('seguimientos fallaron', { error: errorATexto(e) })),
+  5 * 60 * 1000,
+).unref();
 
 const app = crearServidor({ config, procesar: (e) => motor.procesar(e) });
 serve({ fetch: app.fetch, port: config.PORT }, (info) =>

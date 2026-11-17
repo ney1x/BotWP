@@ -42,7 +42,7 @@ describe('webhook de YCloud', () => {
     const c = (m: Record<string, unknown>) => (interpretarWebhookYCloud(entrante(m))[0] as Extract<Entrante, { tipo: 'mensaje' }>).contenido;
     expect(c({ type: 'interactive', interactive: { type: 'button_reply', button_reply: { id: 'SI', title: 'Sí' } } })).toEqual({ clase: 'opcion', id: 'SI', titulo: 'Sí' });
     expect(c({ type: 'interactive', interactive: { type: 'list_reply', list_reply: { id: 'MENU_ORO', title: 'Precio del oro' } } })).toMatchObject({ clase: 'opcion', id: 'MENU_ORO' });
-    expect(c({ type: 'image', image: { id: 'img1', link: 'https://api.ycloud.com/x', caption: 'reloj' } })).toEqual({ clase: 'imagen', mediaId: 'img1', caption: 'reloj' });
+    expect(c({ type: 'image', image: { id: 'img1', link: 'https://api.ycloud.com/x', caption: 'reloj' } })).toEqual({ clase: 'imagen', mediaId: 'img1', url: 'https://api.ycloud.com/x', caption: 'reloj' });
     expect(c({ type: 'audio', audio: { id: 'a1' } })).toEqual({ clase: 'audio' });
   });
 
@@ -132,5 +132,58 @@ describe('servidor con WA_PROVEEDOR=ycloud', () => {
     const app = crearServidor({ config: { ...config, WA_VERIFY_TOKEN: 'x' }, procesar: async () => {} });
     const r = await app.request('/webhook?hub.mode=subscribe&hub.verify_token=x&hub.challenge=123');
     expect(r.status).toBe(403);
+  });
+});
+
+describe('reenvío de fotos por YCloud', () => {
+  test('descarga el enlace con la API key, sube el archivo y lo envía por id', async () => {
+    const llamadas: { url: string; init?: RequestInit }[] = [];
+    const f = (async (url: string, init?: RequestInit) => {
+      llamadas.push({ url, init });
+      if (url.includes('/media/download/')) return new Response(new Uint8Array([1, 2, 3]), { headers: { 'content-type': 'image/jpeg' } });
+      if (url.includes('/upload')) return new Response(JSON.stringify({ id: 'subida-1' }));
+      return new Response(JSON.stringify({ status: 'accepted' }));
+    }) as unknown as typeof fetch;
+    const api = new YCloudApi({ apiKey: 'k', numero: '+17868782085' }, f);
+    await api.reenviarImagen('17860000000', 'https://api.ycloud.com/v2/whatsapp/media/download/1?sig=x', 'Foto de +1786');
+
+    expect(llamadas[0]!.url).toContain('/media/download/1');
+    expect((llamadas[0]!.init?.headers as Record<string, string>)['X-API-Key']).toBe('k');
+    expect(llamadas[1]!.url).toBe('https://api.ycloud.com/v2/whatsapp/media/%2B17868782085/upload');
+    expect(llamadas[1]!.init?.body).toBeInstanceOf(FormData);
+    expect(JSON.parse(String(llamadas[2]!.init?.body))).toMatchObject({ to: '+17860000000', type: 'image', image: { id: 'subida-1' } });
+  });
+
+  test('la API key nunca viaja a otro dominio ni por HTTP', async () => {
+    const llamadas: string[] = [];
+    const f = (async (url: string) => {
+      llamadas.push(url);
+      return new Response('x');
+    }) as unknown as typeof fetch;
+    const api = new YCloudApi({ apiKey: 'clave-ficticia', numero: '+1' }, f);
+    await expect(api.reenviarImagen('1', 'https://atacante.example/robar')).rejects.toThrow('no permitido');
+    await expect(api.reenviarImagen('1', 'https://api.ycloud.com.atacante.example/x')).rejects.toThrow('no permitido');
+    await expect(api.reenviarImagen('1', 'http://api.ycloud.com/x')).rejects.toThrow();
+    expect(llamadas).toEqual([]);
+  });
+
+  test('una redirección se sigue sin la API key', async () => {
+    const llamadas: { url: string; init?: RequestInit }[] = [];
+    const f = (async (url: string, init?: RequestInit) => {
+      llamadas.push({ url, init });
+      if (url.includes('/media/download/')) return new Response(null, { status: 302, headers: { location: 'https://cdn.otro.example/a.jpg' } });
+      if (url.includes('cdn.otro.example')) return new Response(new Uint8Array([1]), { headers: { 'content-type': 'image/jpeg' } });
+      if (url.includes('/upload')) return new Response(JSON.stringify({ id: 'm1' }));
+      return new Response('{}');
+    }) as unknown as typeof fetch;
+    await new YCloudApi({ apiKey: 'k', numero: '+1' }, f).reenviarImagen('1', 'https://api.ycloud.com/v2/whatsapp/media/download/9');
+    expect(llamadas[0]!.init?.redirect).toBe('manual');
+    expect(llamadas[1]!.url).toBe('https://cdn.otro.example/a.jpg');
+    expect(llamadas[1]!.init?.headers).toBeUndefined();
+  });
+
+  test('sin enlace de descarga falla (el motor lo registra y sigue)', async () => {
+    const api = new YCloudApi({ apiKey: 'k', numero: '+1' }, (async () => new Response('{}')) as unknown as typeof fetch);
+    await expect(api.reenviarImagen('1', 'media-sin-link')).rejects.toThrow('enlace');
   });
 });

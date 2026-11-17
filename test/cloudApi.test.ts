@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, test } from 'vitest';
-import { cuerpoCloud, firmaValida, interpretarWebhook } from '../src/whatsapp/cloudApi.js';
+import { CloudApi, cuerpoCloud, firmaValida, interpretarWebhook } from '../src/whatsapp/cloudApi.js';
 
 const envoltura = (field: string, value: unknown) => ({ object: 'whatsapp_business_account', entry: [{ id: '1', changes: [{ field, value }] }] });
 
@@ -69,5 +69,35 @@ describe('webhook de Cloud API', () => {
     }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
     const filas = l.interactive.action.sections.flatMap((s: { rows: unknown[] }) => s.rows);
     expect(filas).toHaveLength(10);
+  });
+});
+
+describe('reenvío de fotos por Cloud API', () => {
+  const opciones = { token: 't', phoneNumberId: 'P1', graphVersion: 'v25.0' };
+
+  test('resuelve el media id, descarga de Meta, sube y envía por id', async () => {
+    const urls: string[] = [];
+    const f = (async (url: string) => {
+      urls.push(url);
+      if (url.endsWith('/v25.0/m1')) return new Response(JSON.stringify({ url: 'https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=1' }));
+      if (url.includes('lookaside')) return new Response(new Uint8Array([1]), { headers: { 'content-type': 'image/jpeg' } });
+      if (url.endsWith('/P1/media')) return new Response(JSON.stringify({ id: 'nuevo' }));
+      return new Response('{}');
+    }) as unknown as typeof fetch;
+    await new CloudApi(opciones, f).reenviarImagen('1786', 'm1');
+    expect(urls).toHaveLength(4);
+    expect(urls[3]).toContain('/P1/messages');
+  });
+
+  test('no acepta enlaces ni URLs de media fuera de Meta (el token no sale)', async () => {
+    const urls: string[] = [];
+    const f = (async (url: string) => {
+      urls.push(url);
+      return new Response(JSON.stringify({ url: 'https://atacante.example/x' }));
+    }) as unknown as typeof fetch;
+    const api = new CloudApi(opciones, f);
+    await expect(api.reenviarImagen('1', 'https://atacante.example/x')).rejects.toThrow('inválida');
+    await expect(api.reenviarImagen('1', 'm1')).rejects.toThrow('no permitido');
+    expect(urls).toEqual(['https://graph.facebook.com/v25.0/m1']);
   });
 });

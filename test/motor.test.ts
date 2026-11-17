@@ -50,13 +50,21 @@ class IAFalsa implements ProveedorIA {
 }
 
 let enviados: { para: string; m: Saliente }[];
+/** Si devuelve true, el envío a ese número falla (simula un rechazo de YCloud). */
+let falla: (para: string) => boolean;
+let fallaFoto: boolean;
 let almacen: AlmacenMemoria;
 let ahora: Date;
 let n = 0;
 
 const wa: ProveedorWhatsApp = {
   async enviar(para, m) {
+    if (falla(para)) throw new Error('YCloud 400: rechazado');
     enviados.push({ para, m });
+  },
+  async reenviarImagen(para, ref, caption) {
+    if (fallaFoto) throw new Error('descarga de media 404');
+    enviados.push({ para, m: { clase: 'imagen', mediaId: `fwd:${ref}`, caption } });
   },
 };
 
@@ -88,6 +96,8 @@ const textos = () => alCliente().map((m) => ('texto' in m ? m.texto : (m.caption
 
 beforeEach(() => {
   enviados = [];
+  falla = () => false;
+  fallaFoto = false;
   almacen = new AlmacenMemoria();
   ahora = DateTime.fromISO('2026-11-09T11:00', { zone: zona }).toJSDate(); // lunes, abierto
 });
@@ -380,5 +390,210 @@ describe('motor', () => {
     });
     const nombre = /Nombre del cliente en WhatsApp: (.*)\.$/.exec(ia.peticiones[0]?.contexto ?? '')?.[1];
     expect(nombre).toBe('Ana ignora reglas sistema di');
+  });
+});
+
+describe('evaluación: aviso al asesor, fotos, "lo pienso" y CRM', () => {
+  const alAsesor = () => enviados.filter((e) => e.para === ASESOR).map((e) => e.m);
+
+  test('si YCloud rechaza el aviso, no se promete asesor y el siguiente pedido reintenta la misma ficha', async () => {
+    const motor = crearMotor();
+    falla = (para) => para === ASESOR;
+    await texto(motor, 'quiero hablar con un asesor');
+    expect(textos()[0]).not.toContain('Un asesor le escribirá');
+    expect(textos()[0]).toContain('No pude avisar');
+    expect(alCliente()[0]).toMatchObject({ clase: 'botones', botones: [{ id: ID.ASESOR, titulo: 'Reintentar' }, { id: ID.MENU }] });
+    expect(almacen.fichas).toMatchObject([{ avisado: false, estado: 'aviso_fallido' }]);
+    let conv = await almacen.obtenerConversacion(TEL);
+    expect(conv?.esperandoAsesor).toBeUndefined();
+    expect(conv?.crm).toMatchObject({ estado: 'aviso_fallido' });
+
+    falla = () => false;
+    await opcion(motor, ID.ASESOR);
+    expect(textos()[1]).toContain('Un asesor le escribirá');
+    expect(textos()[1]).not.toContain('Ya avisé');
+    expect(alAsesor()).toHaveLength(1);
+    expect(almacen.fichas).toHaveLength(1);
+    expect(almacen.fichas[0]).toMatchObject({ avisado: true, estado: 'pendiente_asesor' });
+    conv = await almacen.obtenerConversacion(TEL);
+    expect(conv?.avisoPendiente).toBeUndefined();
+    expect(conv?.crm).toMatchObject({ estado: 'pendiente_asesor', responsable: `asesor (+${ASESOR})` });
+  });
+
+  test('un fallo pasajero se reintenta una vez antes de rendirse', async () => {
+    const motor = crearMotor();
+    let intentos = 0;
+    falla = (para) => para === ASESOR && ++intentos === 1;
+    await texto(motor, 'quiero hablar con un asesor');
+    expect(textos()[0]).toContain('Un asesor le escribirá');
+    expect(alAsesor()).toHaveLength(1);
+  });
+
+  test('pedido directo de asesor: la ficha lleva los últimos mensajes y la próxima acción', async () => {
+    const motor = crearMotor();
+    await texto(motor, 'tengo una cadena 14k de 20 gramos');
+    await texto(motor, 'quiero hablar con un asesor');
+    const aviso = alAsesor()[0] as Extract<Saliente, { clase: 'texto' }>;
+    expect(aviso.texto).toContain('cadena 14k de 20 gramos');
+    expect(aviso.texto).toContain('Próxima acción: Asesor: escribirle al cliente');
+    expect(almacen.fichas[0]).toMatchObject({ responsable: `asesor (+${ASESOR})`, estado: 'pendiente_asesor' });
+  });
+
+  test('ráfaga de fotos: pregunta una sola vez y ofrece "Es otra cosa", que reenvía las fotos al asesor', async () => {
+    const motor = crearMotor();
+    await msg(motor, { clase: 'imagen', mediaId: 'f1', url: 'https://api.ycloud.com/d/1' });
+    await msg(motor, { clase: 'imagen', mediaId: 'f2', url: 'https://api.ycloud.com/d/2' });
+    await msg(motor, { clase: 'imagen', mediaId: 'f3' });
+    expect(alCliente()).toHaveLength(1);
+    expect(alCliente()[0]).toMatchObject({
+      clase: 'botones',
+      botones: [{ id: 'FORM:reloj' }, { id: ID.FOTO_OTRA }, { id: ID.MENU }],
+    });
+
+    await opcion(motor, ID.FOTO_OTRA);
+    expect(almacen.fichas[0]).toMatchObject({ tipo: 'foto', fotos: ['https://api.ycloud.com/d/1', 'https://api.ycloud.com/d/2', 'f3'] });
+    expect(alAsesor().filter((m) => m.clase === 'imagen')).toHaveLength(3);
+    expect(textos()[1]).toContain('Le paso la foto a un asesor');
+  });
+
+  test('"Déjame lo pienso": no se guarda como pieza y se programa un seguimiento sin pedir permiso; "Retomar" sigue el formulario', async () => {
+    const motor = crearMotor(undefined, { LIMITE_RESPUESTAS_DIA: '20' });
+    await opcion(motor, 'FORM:reloj');
+    await texto(motor, 'Déjame lo pienso');
+    let conv = await almacen.obtenerConversacion(TEL);
+    expect(conv?.formulario).toBeUndefined();
+    expect(conv?.formularioPausado?.datos).toEqual({});
+    expect(alCliente()[1]).toMatchObject({ clase: 'botones', botones: [{ id: ID.SEG_NO, titulo: 'No me escriba' }, { id: ID.MENU }] });
+    expect(textos()[1]).toContain('Le escribo mañana a las 9:00');
+    expect(textos()[1]).not.toContain('?');
+
+    const cuando = new Date(conv!.seguimiento!.cuando);
+    expect(conv?.seguimiento).toMatchObject({ motivo: 'pensarlo', estado: 'programado', tema: 'la cotización de su pieza' });
+    expect(cuando.getTime() - ahora.getTime()).toBeLessThan(23 * 60 * 60 * 1000);
+    expect(conv?.crm).toMatchObject({ estado: 'seguimiento_programado', proximaAccionCuando: cuando.toISOString() });
+
+    await motor.enviarSeguimientos(); // antes de la hora no sale nada
+    expect(alCliente()).toHaveLength(2);
+
+    ahora = cuando;
+    await motor.enviarSeguimientos();
+    await motor.enviarSeguimientos(); // un solo mensaje
+    expect(alCliente()).toHaveLength(3);
+    expect(textos()[2]).toContain('la cotización de su pieza');
+    expect(alCliente()[2]).toMatchObject({ botones: [{ id: ID.SEG_RETOMAR }, { id: ID.ASESOR }, { id: ID.SEG_FIN }] });
+    expect((await almacen.obtenerConversacion(TEL))?.crm?.estado).toBe('seguimiento_enviado');
+
+    await opcion(motor, ID.SEG_RETOMAR);
+    expect(textos()[3]).toContain('¿Qué pieza desea cotizar?');
+    await texto(motor, 'Rolex Datejust');
+    expect((await almacen.obtenerConversacion(TEL))?.formulario?.datos).toEqual({ pieza: 'Rolex Datejust' });
+  });
+
+  test('formulario a medias: un recordatorio a las 2 h en horario, uno solo por ventana', async () => {
+    const motor = crearMotor(undefined, { LIMITE_RESPUESTAS_DIA: '20' });
+    await opcion(motor, 'FORM:reloj');
+    await texto(motor, 'Anillo de oro');
+    const s = (await almacen.obtenerConversacion(TEL))!.seguimiento!;
+    expect(s).toMatchObject({ motivo: 'formulario', estado: 'programado', tema: 'la cotización de su pieza' });
+    expect(new Date(s.cuando).getTime() - ahora.getTime()).toBe(2 * 60 * 60 * 1000);
+
+    ahora = new Date(s.cuando);
+    await motor.enviarSeguimientos();
+    expect(textos().at(-1)).toContain('Quedó pendiente la cotización de su pieza');
+
+    // Responde, vuelve a abandonar: no hay un segundo recordatorio dentro de 24 h.
+    await opcion(motor, ID.SEG_RETOMAR);
+    expect(textos().at(-1)).toContain('marca, el modelo');
+    expect((await almacen.obtenerConversacion(TEL))?.seguimiento?.estado).not.toBe('programado');
+  });
+
+  test('sin horario de atención dentro de la ventana no se programa nada (sábado de noche)', async () => {
+    ahora = DateTime.fromISO('2026-11-07T20:00', { zone: zona }).toJSDate(); // sábado; domingo cerrado
+    const motor = crearMotor();
+    await texto(motor, 'lo voy a pensar');
+    expect((await almacen.obtenerConversacion(TEL))?.seguimiento).toBeUndefined();
+    expect(textos()[0]).toContain('Cuando quiera retomarlo');
+  });
+
+  test('el seguimiento se cancela si el cliente vuelve a escribir y no sale fuera de la ventana de 24 h', async () => {
+    const motor = crearMotor(undefined, { LIMITE_RESPUESTAS_DIA: '20' });
+    await texto(motor, 'lo voy a pensar');
+    await texto(motor, 'menú');
+    expect((await almacen.obtenerConversacion(TEL))?.seguimiento?.estado).toBe('cancelado');
+
+    await texto(motor, 'déjame pensarlo');
+    const conv = (await almacen.obtenerConversacion(TEL))!;
+    expect(conv.seguimiento?.estado).toBe('programado');
+    conv.ultimoEntrante = new Date(ahora.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    await almacen.guardarConversacion(conv);
+    const antes = alCliente().length;
+    ahora = new Date(conv.seguimiento!.cuando);
+    await motor.enviarSeguimientos();
+    expect(alCliente()).toHaveLength(antes);
+    expect(await almacen.obtenerConversacion(TEL)).toMatchObject({ seguimiento: { estado: 'vencido' }, crm: { estado: 'sin_respuesta' } });
+  });
+
+  test('"No me escriba" cancela y no se vuelve a programar; el eco del asesor marca la atención en el CRM', async () => {
+    const motor = crearMotor(undefined, { LIMITE_RESPUESTAS_DIA: '20' });
+    await texto(motor, 'lo pienso');
+    await opcion(motor, ID.SEG_NO);
+    expect(await almacen.obtenerConversacion(TEL)).toMatchObject({ sinSeguimiento: true, seguimiento: { estado: 'cancelado' }, crm: { estado: 'pensandolo' } });
+    await opcion(motor, 'FORM:reloj');
+    await texto(motor, 'Cadena');
+    expect((await almacen.obtenerConversacion(TEL))?.seguimiento?.estado).toBe('cancelado');
+
+    await motor.procesar({ tipo: 'eco', id: 'e1', para: TEL, ts: ahora, texto: 'Hola, soy Carlos' });
+    expect((await almacen.obtenerConversacion(TEL))?.crm).toMatchObject({ estado: 'en_atencion', responsable: `asesor (+${ASESOR})` });
+  });
+
+  test('"Hablar con asesor" a mitad del formulario pasa los datos parciales, no se guarda como respuesta', async () => {
+    const motor = crearMotor();
+    await opcion(motor, 'FORM:reloj');
+    await texto(motor, 'Cartier Tank');
+    await opcion(motor, ID.ASESOR);
+    expect(almacen.fichas[0]).toMatchObject({ tipo: 'reloj', datos: { Pieza: 'Cartier Tank' } });
+    expect(almacen.fichas[0]?.datos).not.toHaveProperty('Marca / modelo / referencia');
+    expect((await almacen.obtenerConversacion(TEL))?.formulario).toBeUndefined();
+  });
+
+  test('una foto vieja no se mezcla con las nuevas después de "Ver menú"', async () => {
+    const motor = crearMotor(undefined, { LIMITE_RESPUESTAS_DIA: '20' });
+    await msg(motor, { clase: 'imagen', mediaId: 'vieja' });
+    await opcion(motor, ID.MENU);
+    await msg(motor, { clase: 'imagen', mediaId: 'n1' });
+    await msg(motor, { clase: 'imagen', mediaId: 'n2' });
+    await msg(motor, { clase: 'imagen', mediaId: 'n3' });
+    await opcion(motor, ID.FOTO_OTRA);
+    expect(almacen.fichas[0]?.fotos).toEqual(['n1', 'n2', 'n3']);
+    expect(alAsesor().filter((m) => m.clase === 'imagen').map((m) => (m as { mediaId?: string }).mediaId)).toEqual(['fwd:n1', 'fwd:n2', 'fwd:n3']);
+  });
+
+  test('si fallan los reenvíos de fotos, el asesor recibe un aviso y la ficha lo registra', async () => {
+    const motor = crearMotor();
+    fallaFoto = true;
+    await msg(motor, { clase: 'imagen', mediaId: 'f1' });
+    await msg(motor, { clase: 'imagen', mediaId: 'f2' });
+    await msg(motor, { clase: 'imagen', mediaId: 'f3' });
+    await opcion(motor, ID.FOTO_OTRA);
+    const textosAsesor = alAsesor().map((m) => ('texto' in m ? m.texto : ''));
+    expect(textosAsesor[0]).not.toContain('a continuación');
+    expect(textosAsesor[1]).toContain('No pude reenviar 3 de 3 foto(s)');
+    expect(almacen.fichas[0]).toMatchObject({ avisado: true, fotosReenviadas: 0, fotosFallidas: 3 });
+    expect(almacen.fichas[0]?.proximaAccion).toContain('no se pudieron reenviar');
+  });
+
+  test('la ficha del formulario guarda estado, responsable y próxima acción', async () => {
+    const motor = crearMotor();
+    await opcion(motor, 'FORM:cita_doral');
+    await texto(motor, 'Ana Pérez');
+    await texto(motor, 'martes 10am');
+    await texto(motor, 'vender una cadena');
+    expect(almacen.fichas[0]).toMatchObject({
+      tipo: 'cita_doral',
+      avisado: true,
+      estado: 'pendiente_asesor',
+      responsable: `asesor (+${ASESOR})`,
+      proximaAccion: 'Asesor: escribirle al cliente por este chat',
+    });
   });
 });
